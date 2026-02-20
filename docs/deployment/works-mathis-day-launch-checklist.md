@@ -13,8 +13,8 @@
 
 ## 3) Auth + Admin Access
 - [x] In Supabase Auth settings, include callback URL: `https://works.mathis.day/auth/callback`
-- [ ] Sign in once with magic link to create a `profiles` row
-- [ ] Set `profiles.is_admin = true` manually for admin account(s)
+- [x] Sign in once with magic link to create a `profiles` row
+- [x] Set `profiles.is_admin = true` manually for admin account(s)
 
 ## 4) Environment Variables
 Set these in Vercel (Project Settings -> Environment Variables):
@@ -29,13 +29,13 @@ Set these in Vercel (Project Settings -> Environment Variables):
 - [x] Verify Vercel domain status is valid and SSL issued
 
 ## 6) Verification (Pre-Launch)
-- [ ] `pnpm typecheck`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm test:e2e` (smoke path)
+- [x] `pnpm typecheck`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm test:e2e` (smoke path)
 
 ## 7) Smoke Test (Production)
-- [ ] Public page loads at `https://works.mathis.day`
+- [x] Public page loads at `https://works.mathis.day`
 - [ ] Grid and Timeline toggle both render data
 - [ ] Search, tag filtering, and date filtering return expected results
 - [ ] Work detail opens and back navigation preserves gallery state

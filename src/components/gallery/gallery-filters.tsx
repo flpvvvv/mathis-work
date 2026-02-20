@@ -40,6 +40,7 @@ export function GalleryFilters({ filters, tags, onChange, onClear }: Props) {
   return (
     <section className="space-y-3">
       <Input
+        aria-label="Search descriptions"
         placeholder="Search descriptions..."
         value={filters.query}
         onChange={(event) => onChange({ ...filters, query: event.target.value })}

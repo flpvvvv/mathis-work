@@ -401,6 +401,7 @@ export function WorkEditor({ mode, work }: Props) {
                           Cover
                         </label>
                         <button
+                          aria-label="Remove image"
                           className="inline-flex size-8 items-center justify-center rounded-md border border-[var(--border)]"
                           type="button"
                           onClick={() => removeImage(image.id)}
@@ -460,6 +461,7 @@ export function WorkEditor({ mode, work }: Props) {
                         </label>
                       ) : null}
                       <button
+                        aria-label="Remove upload"
                         className="inline-flex size-8 items-center justify-center rounded-md border border-[var(--border)]"
                         type="button"
                         onClick={() => removeUpload(upload.id)}

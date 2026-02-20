@@ -69,6 +69,7 @@ export function LoginForm({ redirectPath, showForbiddenMessage = false }: Props)
             autoComplete="email"
             placeholder="you@example.com"
             type="email"
+            spellCheck={false}
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
