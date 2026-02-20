@@ -1,18 +1,18 @@
 # works.mathis.day Launch Checklist
 
 ## 1) Project Setup
-- [ ] Create Supabase project for Mathis Gallery
-- [ ] Create Vercel project from this repository
-- [ ] Set production domain to `works.mathis.day`
+- [x] Create Supabase project for Mathis Gallery
+- [x] Create Vercel project from this repository
+- [x] Set production domain to `works.mathis.day`
 
 ## 2) Database + Storage
-- [ ] Run Supabase migration in `supabase/migrations/20260220000100_init_mathis_gallery.sql`
-- [ ] Confirm tables exist: `profiles`, `works`, `images`, `tags`, `work_tags`
-- [ ] Confirm bucket exists: `artworks` (public read)
-- [ ] Confirm RLS policies are enabled and active
+- [x] Run Supabase migration in `supabase/migrations/20260220000100_init_mathis_gallery.sql`
+- [x] Confirm tables exist: `profiles`, `works`, `images`, `tags`, `work_tags`
+- [x] Confirm bucket exists: `artworks` (public read)
+- [x] Confirm RLS policies are enabled and active
 
 ## 3) Auth + Admin Access
-- [ ] In Supabase Auth settings, include callback URL: `https://works.mathis.day/auth/callback`
+- [x] In Supabase Auth settings, include callback URL: `https://works.mathis.day/auth/callback`
 - [ ] Sign in once with magic link to create a `profiles` row
 - [ ] Set `profiles.is_admin = true` manually for admin account(s)
 
@@ -23,10 +23,10 @@ Set these in Vercel (Project Settings -> Environment Variables):
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ## 5) DNS
-- [ ] In DNS provider, add CNAME:
+- [x] In DNS provider, add CNAME:
   - Name: `works`
   - Target: `cname.vercel-dns.com`
-- [ ] Verify Vercel domain status is valid and SSL issued
+- [x] Verify Vercel domain status is valid and SSL issued
 
 ## 6) Verification (Pre-Launch)
 - [ ] `pnpm typecheck`
