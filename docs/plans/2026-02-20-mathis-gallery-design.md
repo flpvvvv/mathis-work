@@ -315,25 +315,25 @@ Step-by-step flow:
 
 ### 8.1 Visual Direction
 
-**Warm & playful** — friendly and inviting, celebrating a child's creativity without being childish. Clean layouts let the artwork be the star.
+**Neo-Brutalism (Playful Brutalism)** — Structural, unpretentious, with vibrant accents that frame the art. Thick borders, hard drop shadows, and distinctive typography replace generic UI libraries.
 
 ### 8.2 Color Palette
 
 | Role | Light Mode | Dark Mode |
 |---|---|---|
-| Background | Warm cream `#FFF8F0` | Charcoal `#1A1A2E` |
+| Background | Warm paper cream `#FFF8F0` | Charcoal `#1A1A2E` |
 | Surface | White `#FFFFFF` | Dark slate `#242440` |
-| Primary | Coral `#FF6B6B` | Coral `#FF6B6B` |
-| Secondary | Soft teal `#4ECDC4` | Soft teal `#4ECDC4` |
-| Accent | Golden yellow `#FFE66D` | Golden yellow `#FFE66D` |
-| Text primary | Dark brown `#2D2D2D` | Warm white `#F5F0EB` |
-| Text secondary | Medium brown `#6B5B4F` | Muted cream `#B8AFA6` |
-| Border | Light tan `#E8DDD3` | Dark border `#3A3A5C` |
+| Primary | Bubblegum Pink `#FF6B6B` | Bubblegum Pink `#FF6B6B` |
+| Secondary | Electric Cyan `#4ECDC4` | Electric Cyan `#4ECDC4` |
+| Accent | Sunny Yellow `#FFE66D` | Sunny Yellow `#FFE66D` |
+| Text primary | Pitch Black `#000000` | Warm white `#F5F0EB` |
+| Text secondary | Heavy Grey `#333333` | Muted cream `#B8AFA6` |
+| Border | Solid Black `#000000` | Solid White `#FFFFFF` |
 
 ### 8.3 Typography
 
-- **Headings**: Nunito (Google Fonts) — rounded, friendly, playful
-- **Body**: Inter (Google Fonts) — clean, highly readable
+- **Headings**: Caprasimo (Google Fonts) — chunky, playful, organic
+- **Body**: Outfit (Google Fonts) — clean, geometric, structured
 - **Scale**: fluid type using `clamp()` for responsive sizing
 
 ### 8.4 Spacing & Layout
@@ -341,12 +341,13 @@ Step-by-step flow:
 - 8px base grid
 - Content max-width: 1280px (centered)
 - Mobile padding: 16px
-- Card border-radius: 12px
-- Consistent shadow: `0 2px 8px rgba(0,0,0,0.08)` (light), `0 2px 8px rgba(0,0,0,0.3)` (dark)
+- Card border-radius: 0px (Sharp edges) or slightly rounded but with hard borders (e.g. 4px)
+- Consistent shadow: `4px 4px 0px 0px rgba(0,0,0,1)` (light), `4px 4px 0px 0px rgba(255,255,255,1)` (dark)
+- Cards slightly rotate and shadow expands on hover
 
 ### 8.5 Logo
 
-AI-generated creative logo fitting the warm & playful aesthetic. Used in the header and as favicon. Should work at small sizes (favicon 32x32) and larger (header ~40px height).
+Inline, playful overlapping geometric 'M' SVG logo. Applied to header and exported as favicon.
 
 ### 8.6 Dark/Light Mode
 

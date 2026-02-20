@@ -1,0 +1,116 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Caprasimo&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", system-ui, sans-serif;
+  --font-display: "Caprasimo", "Outfit", system-ui, sans-serif;
+
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--border);
+  --color-background: var(--background);
+  --color-foreground: var(--text-primary);
+  
+  --color-primary: var(--primary);
+  --color-primary-foreground: #000000;
+  
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: #000000;
+  
+  --color-destructive: #ff4d4f;
+  --color-destructive-foreground: #000000;
+  
+  --color-muted: #e2e8f0;
+  --color-muted-foreground: var(--text-secondary);
+  
+  --color-accent: var(--accent);
+  --color-accent-foreground: #000000;
+  
+  --color-popover: var(--background);
+  --color-popover-foreground: var(--text-primary);
+  
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text-primary);
+
+  --radius-lg: 0px;
+  --radius-md: 0px;
+  --radius-sm: 0px;
+
+  /* Custom shadows for neo-brutalism */
+  --shadow-brutal: 4px 4px 0px 0px var(--shadow-color);
+  --shadow-brutal-lg: 8px 8px 0px 0px var(--shadow-color);
+  --shadow-brutal-sm: 2px 2px 0px 0px var(--shadow-color);
+  --shadow-brutal-active: 2px 2px 0px 0px var(--shadow-color);
+}
+
+:root {
+  --background: #fff8f0;
+  --surface: #ffffff;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --text-primary: #000000;
+  --text-secondary: #333333;
+  --border: #000000;
+  --shadow-color: #000000;
+}
+
+.dark {
+  --background: #1a1a2e;
+  --surface: #242440;
+  --primary: #ff6b6b;
+  --secondary: #4ecdc4;
+  --accent: #ffe66d;
+  --text-primary: #f5f0eb;
+  --text-secondary: #b8afa6;
+  --border: #ffffff;
+  --shadow-color: #ffffff;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 400; /* Caprasimo is a display font, usually 400 */
+}
+
+/* Animations */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.container-page {
+  margin: 0 auto;
+  max-width: 1280px;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 768px) {
+  .container-page {
+    padding-inline: 1.5rem;
+  }
+}
