@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { Trash2, Upload } from "lucide-react";
+import { Check, Trash2, Upload } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -373,10 +373,29 @@ export function WorkEditor({ mode, work }: Props) {
         <div className="space-y-2">
           <Label htmlFor="images">Images</Label>
           <div className="space-y-2 rounded-md border border-[var(--border)] p-3">
-            {stagedImageOptions.length === 0 ? (
+            {images.length === 0 && uploads.length === 0 ? (
               <p className="text-sm text-[var(--text-secondary)]">No images selected yet.</p>
             ) : (
-              <>
+              <div className="space-y-3">
+                {uploads.some((upload) => upload.state === "pending") && (
+                  <div className="flex justify-end mb-2">
+                    <Button
+                      size="sm"
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        uploads.forEach((upload) => {
+                          if (upload.state === "pending") {
+                            void processAsIs(upload.id);
+                          }
+                        });
+                      }}
+                    >
+                      <Check className="mr-2 size-4" />
+                      Process all "As-Is"
+                    </Button>
+                  </div>
+                )}
                 {images
                   .toSorted((a, b) => a.displayOrder - b.displayOrder)
                   .map((image) => (
@@ -471,7 +490,7 @@ export function WorkEditor({ mode, work }: Props) {
                     </div>
                   </div>
                 ))}
-              </>
+              </div>
             )}
           </div>
           <Input
