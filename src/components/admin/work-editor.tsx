@@ -84,19 +84,6 @@ export function WorkEditor({ mode, work }: Props) {
       upload.state === "processing" ||
       upload.state === "error",
   );
-  const stagedImageOptions = useMemo(
-    () => [
-      ...images.map((image) => ({
-        id: image.id,
-        label: image.storagePath,
-      })),
-      ...readyUploads.map((upload) => ({
-        id: upload.id,
-        label: `${upload.file.name} (${upload.result.width}x${upload.result.height})`,
-      })),
-    ],
-    [images, readyUploads],
-  );
 
   function onFilesSelected(fileList: FileList | null) {
     const picked = Array.from(fileList ?? []);
@@ -392,7 +379,7 @@ export function WorkEditor({ mode, work }: Props) {
                       }}
                     >
                       <Check className="mr-2 size-4" />
-                      Process all "As-Is"
+                      Process all &quot;As-Is&quot;
                     </Button>
                   </div>
                 )}
