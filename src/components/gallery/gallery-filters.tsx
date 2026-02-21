@@ -52,7 +52,7 @@ export function GalleryFilters({ filters, tags, onChange, onClear }: Props) {
             <button
               key={tag}
               className={cn(
-                "rounded-full border px-3 py-1 text-xs transition",
+                "rounded-none border px-3 py-1 text-xs transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--border)]",
                 active
                   ? "border-transparent bg-[var(--primary)] text-white"
                   : "border-[var(--border)] bg-[var(--surface)]",

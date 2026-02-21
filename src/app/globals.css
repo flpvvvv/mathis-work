@@ -37,9 +37,9 @@
   --radius-sm: 0px;
 
   /* Custom shadows for neo-brutalism */
-  --shadow-brutal: 4px 4px 0px 0px var(--shadow-color);
-  --shadow-brutal-lg: 8px 8px 0px 0px var(--shadow-color);
-  --shadow-brutal-sm: 2px 2px 0px 0px var(--shadow-color);
+  --shadow-brutal: 8px 8px 0px 0px var(--shadow-color);
+  --shadow-brutal-lg: 12px 12px 0px 0px var(--shadow-color);
+  --shadow-brutal-sm: 4px 4px 0px 0px var(--shadow-color);
   --shadow-brutal-active: 2px 2px 0px 0px var(--shadow-color);
 }
 

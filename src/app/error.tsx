@@ -9,7 +9,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
+    <div className="space-y-4 rounded-none border border-[var(--border)] bg-[var(--surface)] p-6">
       <h2 className="text-xl font-semibold">Something went wrong</h2>
       <p className="text-sm text-[var(--text-secondary)]">
         Could not save or load this data. Please check your connection and try again.

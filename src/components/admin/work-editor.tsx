@@ -359,7 +359,7 @@ export function WorkEditor({ mode, work }: Props) {
 
         <div className="space-y-2">
           <Label htmlFor="images">Images</Label>
-          <div className="space-y-2 rounded-md border border-[var(--border)] p-3">
+          <div className="space-y-2 rounded-none border border-[var(--border)] p-3">
             {images.length === 0 && uploads.length === 0 ? (
               <p className="text-sm text-[var(--text-secondary)]">No images selected yet.</p>
             ) : (
@@ -388,7 +388,7 @@ export function WorkEditor({ mode, work }: Props) {
                   .map((image) => (
                     <div
                       key={image.id}
-                      className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] p-2"
+                      className="flex items-center justify-between gap-3 rounded-none border border-[var(--border)] p-2"
                     >
                       <div className="space-y-1">
                         <p className="text-xs font-medium">{image.storagePath}</p>
@@ -408,7 +408,7 @@ export function WorkEditor({ mode, work }: Props) {
                         </label>
                         <button
                           aria-label="Remove image"
-                          className="inline-flex size-8 items-center justify-center rounded-md border border-[var(--border)]"
+                          className="inline-flex size-8 items-center justify-center rounded-none border border-[var(--border)]"
                           type="button"
                           onClick={() => removeImage(image.id)}
                         >
@@ -421,7 +421,7 @@ export function WorkEditor({ mode, work }: Props) {
                 {uploads.map((upload) => (
                   <div
                     key={upload.id}
-                    className="flex items-center justify-between gap-3 rounded-md border border-[var(--border)] p-2"
+                    className="flex items-center justify-between gap-3 rounded-none border border-[var(--border)] p-2"
                   >
                     <div className="space-y-1">
                       <p className="text-xs font-medium">{upload.file.name}</p>
@@ -468,7 +468,7 @@ export function WorkEditor({ mode, work }: Props) {
                       ) : null}
                       <button
                         aria-label="Remove upload"
-                        className="inline-flex size-8 items-center justify-center rounded-md border border-[var(--border)]"
+                        className="inline-flex size-8 items-center justify-center rounded-none border border-[var(--border)]"
                         type="button"
                         onClick={() => removeUpload(upload.id)}
                       >

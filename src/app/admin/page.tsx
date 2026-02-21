@@ -28,7 +28,7 @@ export default async function AdminDashboardPage() {
               </p>
             </div>
             <Link
-              className="inline-flex h-9 items-center rounded-md border border-[var(--border)] px-3 text-sm"
+              className="inline-flex h-9 items-center rounded-none border border-[var(--border)] px-3 text-sm"
               href={`/admin/works/${work.id}/edit`}
             >
               Edit

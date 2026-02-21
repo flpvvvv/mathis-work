@@ -27,7 +27,7 @@ export function WorkGallery({ images, initialImageId, altText }: Props) {
 
   if (!current) {
     return (
-      <div className="flex aspect-[4/3] items-center justify-center rounded-xl border border-dashed border-[var(--border)] text-sm text-[var(--text-secondary)]">
+      <div className="flex aspect-[4/3] items-center justify-center rounded-none border border-dashed border-[var(--border)] text-sm text-[var(--text-secondary)]">
         No images for this work.
       </div>
     );
@@ -35,7 +35,7 @@ export function WorkGallery({ images, initialImageId, altText }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-[var(--border)] bg-black/5 dark:bg-white/5">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-none border border-[var(--border)] bg-black/5 dark:bg-white/5">
         <Image
           fill
           priority
@@ -77,7 +77,7 @@ export function WorkGallery({ images, initialImageId, altText }: Props) {
             <button
               key={image.id}
               aria-label={`View image ${imageIndex + 1}`}
-              className={`relative size-16 shrink-0 overflow-hidden rounded-md border ${
+              className={`relative size-16 shrink-0 overflow-hidden rounded-none border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--border)] ${
                 imageIndex === index
                   ? "border-[var(--primary)]"
                   : "border-[var(--border)] opacity-80"

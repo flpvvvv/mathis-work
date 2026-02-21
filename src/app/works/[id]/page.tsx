@@ -29,7 +29,7 @@ export default async function WorkPage({ params, searchParams }: Props) {
   return (
     <article className="space-y-6">
       <Link
-        className="inline-flex h-9 items-center rounded-md border border-[var(--border)] px-3 text-sm"
+        className="inline-flex h-9 items-center rounded-none border border-[var(--border)] px-3 text-sm"
         href={backHref}
       >
         Back to gallery
@@ -56,13 +56,13 @@ export default async function WorkPage({ params, searchParams }: Props) {
       {profile?.is_admin ? (
         <section className="flex gap-2">
           <Link
-            className="inline-flex h-10 items-center rounded-md border border-[var(--border)] px-4 text-sm"
+            className="inline-flex h-10 items-center rounded-none border border-[var(--border)] px-4 text-sm"
             href={`/admin/works/${work.id}/edit`}
           >
             Edit
           </Link>
           <Link
-            className="inline-flex h-10 items-center rounded-md border border-red-300 px-4 text-sm text-red-700"
+            className="inline-flex h-10 items-center rounded-none border border-red-300 px-4 text-sm text-red-700"
             href={`/admin/works/${work.id}/edit?danger=delete`}
           >
             Delete

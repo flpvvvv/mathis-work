@@ -14,7 +14,7 @@ type Props = {
 
 export function ViewModeToggle({ mode, onChange }: Props) {
   return (
-    <div className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1">
+    <div className="inline-flex rounded-none border border-[var(--border)] bg-[var(--surface)] p-1">
       <Button
         className={cn("h-8 px-3", mode === "grid" ? "" : "shadow-none")}
         size="sm"

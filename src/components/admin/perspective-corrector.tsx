@@ -240,7 +240,7 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
   }
 
   return (
-    <div className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+    <div className="space-y-4 rounded-none border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="space-y-1">
         <h3 className="text-lg font-semibold">Perspective Correction</h3>
         <p className="text-sm text-[var(--text-secondary)]">
@@ -249,7 +249,7 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
       </div>
 
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-none border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </p>
       ) : null}
@@ -259,7 +259,7 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
           <p className="text-sm font-medium">Source</p>
           <canvas
             ref={sourceCanvasRef}
-            className="w-full rounded-md border border-[var(--border)] bg-black/5 dark:bg-white/5 touch-none"
+            className="w-full rounded-none border border-[var(--border)] bg-black/5 dark:bg-white/5 touch-none"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -270,7 +270,7 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
           <p className="text-sm font-medium">Preview</p>
           <canvas
             ref={previewCanvasRef}
-            className="w-full rounded-md border border-[var(--border)] bg-black/5 dark:bg-white/5"
+            className="w-full rounded-none border border-[var(--border)] bg-black/5 dark:bg-white/5"
           />
         </div>
       </div>

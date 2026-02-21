@@ -32,7 +32,7 @@ export function TimelineView({ works, backHref }: Props) {
 
   if (monthKeys.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-[var(--border)] p-10 text-center text-sm text-[var(--text-secondary)]">
+      <div className="rounded-none border border-dashed border-[var(--border)] p-10 text-center text-sm text-[var(--text-secondary)]">
         No works found for these filters.
       </div>
     );
