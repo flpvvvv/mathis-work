@@ -12,6 +12,21 @@ function getSupabaseConfig() {
   return { url, anonKey };
 }
 
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy":
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+};
+
+function applySecurityHeaders(response: NextResponse) {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    response.headers.set(key, value);
+  }
+  return response;
+}
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
     request,
@@ -45,7 +60,7 @@ export async function updateSession(request: NextRequest) {
   const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
 
   if (!isAdminPath) {
-    return response;
+    return applySecurityHeaders(response);
   }
 
   if (!user) {
@@ -68,5 +83,5 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return response;
+  return applySecurityHeaders(response);
 }

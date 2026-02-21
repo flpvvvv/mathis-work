@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/login-form";
 import { getCurrentProfile } from "@/lib/auth";
+
+export const metadata: Metadata = {
+  title: "Admin Login",
+  description: "Sign in to the Mathis Gallery admin panel to manage artworks, tags, and gallery settings.",
+  robots: { index: false, follow: false },
+};
 
 type Props = {
   searchParams: Promise<{

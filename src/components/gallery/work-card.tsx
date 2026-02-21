@@ -16,9 +16,10 @@ function formatDate(date: string) {
 type Props = {
   work: Work;
   backHref: string;
+  priority?: boolean;
 };
 
-export function WorkCard({ work, backHref }: Props) {
+export function WorkCard({ work, backHref, priority }: Props) {
   const coverImage =
     work.images.find((image) => image.id === work.cover_image_id) ?? work.images[0];
   const thumbnail = coverImage
@@ -41,7 +42,8 @@ export function WorkCard({ work, backHref }: Props) {
             fill
             alt={work.description ?? "Artwork by Mathis"}
             className="object-contain"
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            priority={priority}
             sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 20vw"
             src={thumbnail}
           />

@@ -41,7 +41,8 @@ export function WorkGallery({ images, initialImageId, altText }: Props) {
           priority
           alt={altText}
           className="object-contain"
-          sizes="(max-width: 768px) 100vw, 80vw"
+          quality={70}
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 70vw, 60vw"
           src={getPublicImageUrl(current.storage_path)}
         />
 
