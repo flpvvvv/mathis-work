@@ -21,8 +21,11 @@ export function getPublicImageUrl(
     ? storagePath.replace(`${BUCKET_NAME}/`, "")
     : storagePath;
 
+  const isRender = Boolean(transform?.width || transform?.height || transform?.resize);
+  const endpoint = isRender ? "render/image/public" : "object/public";
+
   const imageUrl = new URL(
-    `${url}/storage/v1/object/public/${BUCKET_NAME}/${normalizedPath}`,
+    `${url}/storage/v1/${endpoint}/${BUCKET_NAME}/${normalizedPath}`,
   );
 
   if (transform?.width) {

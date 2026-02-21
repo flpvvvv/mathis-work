@@ -330,6 +330,7 @@ export function WorkEditor({ mode, work }: Props) {
             <Label htmlFor="created-date">Created date</Label>
             <Input
               id="created-date"
+              name="created-date"
               required
               type="date"
               value={createdDate}
@@ -340,6 +341,8 @@ export function WorkEditor({ mode, work }: Props) {
             <Label htmlFor="tags">Tags (comma-separated)</Label>
             <Input
               id="tags"
+              name="tags"
+              autoComplete="off"
               placeholder="portrait, watercolor"
               value={tags}
               onChange={(event) => setTags(event.target.value)}
@@ -351,6 +354,7 @@ export function WorkEditor({ mode, work }: Props) {
           <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
+            name="description"
             placeholder="Describe this artwork..."
             value={description}
             onChange={(event) => setDescription(event.target.value)}

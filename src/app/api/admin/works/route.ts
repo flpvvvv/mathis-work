@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import type { SaveWorkPayload } from "@/lib/admin/work-payload";
 import { createWork } from "@/lib/server/admin-works";
@@ -18,6 +19,8 @@ export async function POST(request: Request) {
   if (!result.ok) {
     return NextResponse.json({ message: result.message }, { status: result.status });
   }
+
+  revalidatePath("/");
 
   return NextResponse.json(result.data, { status: 201 });
 }

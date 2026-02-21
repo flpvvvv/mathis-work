@@ -33,7 +33,7 @@ export function WorkCard({ work, backHref }: Props) {
           back: backHref,
         },
       }}
-      className="group block overflow-hidden border-2 border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-brutal)] transition-all hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[var(--shadow-brutal-lg)] motion-reduce:transition-none motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--border)]"
+      className="group block overflow-hidden border-2 border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-brutal)] transition-[transform,box-shadow] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[var(--shadow-brutal-lg)] motion-reduce:transition-none motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--border)]"
     >
       <div className="relative aspect-[3/4] w-full border-b-2 border-[var(--border)] bg-black/5 dark:bg-white/5">
         {thumbnail ? (

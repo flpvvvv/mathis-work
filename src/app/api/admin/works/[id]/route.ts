@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 import type { SaveWorkPayload } from "@/lib/admin/work-payload";
 import { deleteWork, updateWork } from "@/lib/server/admin-works";
@@ -24,6 +25,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     return NextResponse.json({ message: result.message }, { status: result.status });
   }
 
+  revalidatePath("/");
+  revalidatePath(`/works/${id}`);
+  
   return NextResponse.json(result.data);
 }
 
@@ -34,5 +38,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     return NextResponse.json({ message: result.message }, { status: result.status });
   }
 
+  revalidatePath("/");
+  
   return NextResponse.json(result.data);
 }
