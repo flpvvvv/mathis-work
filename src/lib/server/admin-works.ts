@@ -265,17 +265,20 @@ export async function deleteWork(
   }
 
   const { supabase } = context.data;
-  const { data: existingImages } = await supabase
-    .from("images")
-    .select("storage_path")
-    .eq("work_id", workId);
+
+  const [{ data: existingImages }, { data: workTags }] = await Promise.all([
+    supabase.from("images").select("storage_path").eq("work_id", workId),
+    supabase.from("work_tags").select("tag_id").eq("work_id", workId),
+  ]);
+
+  const tagIds = (workTags ?? []).map((row) => row.tag_id);
 
   const { error } = await supabase.from("works").delete().eq("id", workId);
   if (error) {
     return {
       ok: false,
       status: 500,
-      message: "Could not save the work. Please check your connection and try again.",
+      message: "Could not delete the work. Please check your connection and try again.",
     };
   }
 
@@ -284,6 +287,20 @@ export async function deleteWork(
   );
   if (storagePaths.length > 0) {
     await supabase.storage.from(BUCKET_NAME).remove(storagePaths);
+  }
+
+  if (tagIds.length > 0) {
+    const { data: stillUsed } = await supabase
+      .from("work_tags")
+      .select("tag_id")
+      .in("tag_id", tagIds);
+
+    const stillUsedIds = new Set((stillUsed ?? []).map((row) => row.tag_id));
+    const orphanTagIds = tagIds.filter((id) => !stillUsedIds.has(id));
+
+    if (orphanTagIds.length > 0) {
+      await supabase.from("tags").delete().in("id", orphanTagIds);
+    }
   }
 
   return {

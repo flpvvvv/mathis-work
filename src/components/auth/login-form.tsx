@@ -26,11 +26,12 @@ export function LoginForm({ redirectPath, showForbiddenMessage = false }: Props)
 
     setLoading(true);
     try {
+      sessionStorage.setItem("mathis-gallery:auth-next", redirectPath);
       const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 

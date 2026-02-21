@@ -90,11 +90,7 @@ export function WorkGallery({ images, initialImageId, altText }: Props) {
                 alt=""
                 className="object-cover"
                 sizes="64px"
-                src={getPublicImageUrl(image.storage_path, {
-                  width: 128,
-                  height: 128,
-                  resize: "cover",
-                })}
+                src={getPublicImageUrl(image.storage_path)}
               />
             </button>
           ))}

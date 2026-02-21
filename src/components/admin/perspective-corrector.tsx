@@ -150,6 +150,19 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
     draw();
   }, [draw]);
 
+  function cssToCanvas(
+    event: PointerEvent<HTMLCanvasElement>,
+    canvas: HTMLCanvasElement,
+  ) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (event.clientX - rect.left) * scaleX,
+      y: (event.clientY - rect.top) * scaleY,
+    };
+  }
+
   function updatePointFromPointer(event: PointerEvent<HTMLCanvasElement>) {
     if (draggingIndex === null || !displaySize || !image || !points) {
       return;
@@ -160,12 +173,12 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
       return;
     }
 
-    const rect = canvas.getBoundingClientRect();
-    const x = clamp(event.clientX - rect.left, 0, rect.width);
-    const y = clamp(event.clientY - rect.top, 0, rect.height);
+    const { x, y } = cssToCanvas(event, canvas);
+    const cx = clamp(x, 0, canvas.width);
+    const cy = clamp(y, 0, canvas.height);
 
-    const naturalX = (x / displaySize.width) * image.naturalWidth;
-    const naturalY = (y / displaySize.height) * image.naturalHeight;
+    const naturalX = (cx / displaySize.width) * image.naturalWidth;
+    const naturalY = (cy / displaySize.height) * image.naturalHeight;
 
     setPoints((current) => {
       if (!current) return current;
@@ -184,17 +197,16 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
       return;
     }
 
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const { x, y } = cssToCanvas(event, canvas);
 
     const scaled = points.map((point) => ({
       x: point.x * displaySize.scale,
       y: point.y * displaySize.scale,
     }));
 
+    const hitRadius = 20 * (canvas.width / canvas.getBoundingClientRect().width);
     const targetIndex = scaled.findIndex(
-      (point) => Math.hypot(point.x - x, point.y - y) <= 20,
+      (point) => Math.hypot(point.x - x, point.y - y) <= hitRadius,
     );
 
     if (targetIndex !== -1) {

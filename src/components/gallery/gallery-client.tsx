@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -15,6 +16,7 @@ import {
   ViewModeToggle,
   type ViewMode,
 } from "@/components/gallery/view-mode-toggle";
+import { Input } from "@/components/ui/input";
 import type { Work } from "@/lib/types";
 
 type WorksResponse = {
@@ -122,7 +124,9 @@ export function GalleryClient({
 
   useEffect(() => {
     const params = toSearchParams(debouncedFilters, viewMode);
-    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    const nextUrl = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
     router.replace(nextUrl, { scroll: false });
   }, [debouncedFilters, pathname, router, viewMode]);
 
@@ -161,10 +165,31 @@ export function GalleryClient({
   }, [filters, viewMode]);
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-4xl md:text-5xl font-display uppercase tracking-tight font-bold drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] dark:drop-shadow-[2px_2px_0px_rgba(255,255,255,1)]">Mathis&apos;s Artwork</h1>
+        <h1 className="text-4xl text-pretty md:text-5xl font-display uppercase tracking-tight font-bold drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] dark:drop-shadow-[2px_2px_0px_rgba(255,255,255,1)]">
+          Mathis&apos;s Artwork
+        </h1>
         <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+      </div>
+
+      <div className="relative">
+        <Search
+          aria-hidden="true"
+          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--text-secondary)]"
+        />
+        <Input
+          aria-label="Search artworks"
+          autoComplete="off"
+          className="h-10 pl-10 text-sm"
+          name="search"
+          placeholder="Search descriptions…"
+          spellCheck={false}
+          value={filters.query}
+          onChange={(event) =>
+            setFilters({ ...filters, query: event.target.value })
+          }
+        />
       </div>
 
       <GalleryFilters
@@ -180,9 +205,17 @@ export function GalleryClient({
         <TimelineView backHref={backHref} works={works} />
       )}
 
-      <InfiniteLoader enabled={Boolean(query.hasNextPage)} onLoadMore={onLoadMore} />
+      <InfiniteLoader
+        enabled={Boolean(query.hasNextPage)}
+        onLoadMore={onLoadMore}
+      />
       {query.isFetchingNextPage ? (
-        <p className="text-center text-sm text-[var(--text-secondary)]">Loading more...</p>
+        <p
+          aria-live="polite"
+          className="text-center text-sm text-[var(--text-secondary)]"
+        >
+          Loading more…
+        </p>
       ) : null}
     </section>
   );

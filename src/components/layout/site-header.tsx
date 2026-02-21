@@ -9,10 +9,20 @@ export async function SiteHeader() {
 
   return (
     <header className="border-b-4 border-[var(--border)] bg-[var(--background)] sticky top-0 z-50">
-      <div className="container-page flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 text-2xl font-bold font-display uppercase tracking-wider hover:-translate-y-0.5 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--border)]">
+      <a
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-[var(--primary)] focus:px-4 focus:py-2 focus:text-black focus:font-bold"
+        href="#main-content"
+      >
+        Skip to main content
+      </a>
+      <div className="container-page flex h-16 items-center justify-between gap-3">
+        <Link
+          aria-label="Mathis Gallery — Home"
+          href="/"
+          className="flex items-center gap-3 text-2xl font-bold font-display uppercase tracking-wider hover:-translate-y-0.5 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--border)]"
+        >
           <div className="h-8 w-8 relative flex-shrink-0 shadow-[var(--shadow-brutal-sm)]">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%" aria-hidden="true">
               <rect width="256" height="256" fill="#FFE66D" />
               <rect x="16" y="16" width="224" height="224" fill="#FF6B6B" stroke="black" strokeWidth="16" />
               <path d="M 64 192 V 80 L 128 144 L 192 80 V 192" stroke="black" strokeWidth="24" strokeLinecap="square" strokeLinejoin="miter" fill="none" />

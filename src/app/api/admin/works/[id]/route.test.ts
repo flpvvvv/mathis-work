@@ -4,6 +4,10 @@ import { deleteWork, updateWork } from "@/lib/server/admin-works";
 
 import { DELETE, PATCH } from "./route";
 
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
 vi.mock("@/lib/server/admin-works", () => ({
   updateWork: vi.fn(),
   deleteWork: vi.fn(),

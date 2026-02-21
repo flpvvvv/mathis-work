@@ -4,6 +4,10 @@ import { createWork } from "@/lib/server/admin-works";
 
 import { POST } from "./route";
 
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
 vi.mock("@/lib/server/admin-works", () => ({
   createWork: vi.fn(),
 }));

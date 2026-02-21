@@ -98,7 +98,7 @@ export async function getWorksPage({
     let query = supabase
       .from("works")
       .select(
-        "id,description,created_date,cover_image_id,created_at,updated_at,images(id,work_id,storage_path,width,height,display_order,created_at),work_tags(tags(id,name))",
+        "id,description,created_date,cover_image_id,created_at,updated_at,images!images_work_id_fkey(id,work_id,storage_path,width,height,display_order,created_at),work_tags(tags(id,name))",
         { count: "exact" },
       )
       .order("created_date", { ascending: false });
@@ -121,7 +121,7 @@ export async function getWorksPage({
 
     const { data, error, count } = await query.range(from, to);
     if (error) {
-      return { items: [], nextPage: null, total: 0 };
+      throw new Error(`Failed to load works: ${error.message}`);
     }
 
     const mapped = (data ?? []).map((item) =>
@@ -135,8 +135,9 @@ export async function getWorksPage({
       total,
       nextPage: loaded < total ? page + 1 : null,
     };
-  } catch {
-    return { items: [], nextPage: null, total: 0 };
+  } catch (err) {
+    if (err instanceof Error) throw err;
+    throw new Error("Failed to load works");
   }
 }
 
@@ -146,7 +147,7 @@ export async function getWorkById(id: string): Promise<Work | null> {
     const { data, error } = await supabase
       .from("works")
       .select(
-        "id,description,created_date,cover_image_id,created_at,updated_at,images(id,work_id,storage_path,width,height,display_order,created_at),work_tags(tags(id,name))",
+        "id,description,created_date,cover_image_id,created_at,updated_at,images!images_work_id_fkey(id,work_id,storage_path,width,height,display_order,created_at),work_tags(tags(id,name))",
       )
       .eq("id", id)
       .single();

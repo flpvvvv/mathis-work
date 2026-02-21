@@ -1,10 +1,10 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { Check, Trash2, Upload } from "lucide-react";
+import { Check, Trash2, Upload, AlertTriangle } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { EditableImage, SaveWorkPayload } from "@/lib/admin/work-payload";
@@ -67,7 +67,15 @@ export function WorkEditor({ mode, work }: Props) {
   );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const deleteConfirmRef = useRef<HTMLButtonElement>(null);
   const [correctingUploadId, setCorrectingUploadId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (confirmDelete) {
+      deleteConfirmRef.current?.focus();
+    }
+  }, [confirmDelete]);
 
   const heading = useMemo(
     () => (mode === "create" ? "Save New Work" : "Update Work"),
@@ -282,9 +290,6 @@ export function WorkEditor({ mode, work }: Props) {
     if (!work?.id) {
       return;
     }
-    if (!window.confirm("Delete this work permanently?")) {
-      return;
-    }
 
     setDeleting(true);
     try {
@@ -343,7 +348,7 @@ export function WorkEditor({ mode, work }: Props) {
               id="tags"
               name="tags"
               autoComplete="off"
-              placeholder="portrait, watercolor"
+              placeholder="portrait, watercolor…"
               value={tags}
               onChange={(event) => setTags(event.target.value)}
             />
@@ -355,7 +360,7 @@ export function WorkEditor({ mode, work }: Props) {
           <Textarea
             id="description"
             name="description"
-            placeholder="Describe this artwork..."
+            placeholder="Describe this artwork…"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
           />
@@ -499,15 +504,42 @@ export function WorkEditor({ mode, work }: Props) {
             {heading}
           </Button>
 
-          {mode === "edit" ? (
+          {mode === "edit" && !confirmDelete ? (
             <Button
               disabled={deleting}
               type="button"
               variant="destructive"
-              onClick={onDelete}
+              onClick={() => setConfirmDelete(true)}
             >
+              <Trash2 className="mr-2 size-4" />
               Delete Work
             </Button>
+          ) : null}
+          {mode === "edit" && confirmDelete ? (
+            <div className="flex items-center gap-2 border-2 border-red-500 bg-red-50 dark:bg-red-950/30 px-3 py-2">
+              <AlertTriangle className="size-4 shrink-0 text-red-600" />
+              <span className="text-sm text-red-700 dark:text-red-400">
+                Delete permanently?
+              </span>
+              <Button
+                ref={deleteConfirmRef}
+                disabled={deleting}
+                size="sm"
+                type="button"
+                variant="destructive"
+                onClick={onDelete}
+              >
+                Yes, Delete
+              </Button>
+              <Button
+                size="sm"
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmDelete(false)}
+              >
+                Cancel
+              </Button>
+            </div>
           ) : null}
         </div>
 

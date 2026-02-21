@@ -20,8 +20,8 @@ export function GridView({ works, backHref }: Props) {
       {works.map((work, index) => (
         <div
           key={work.id}
-          className="motion-safe:animate-fade-in-up break-inside-avoid"
-          style={{ animationDelay: `${Math.min(index * 0.05, 1)}s`, opacity: 0 }}
+          className="motion-safe:animate-fade-in-up motion-safe:opacity-0 break-inside-avoid"
+          style={{ animationDelay: `${Math.min(index * 0.05, 1)}s` }}
         >
           <WorkCard backHref={backHref} work={work} />
         </div>

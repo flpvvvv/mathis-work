@@ -121,7 +121,7 @@ artworks/
   {work_id}/{image_id}.jpg    ← final image (JPEG 80%), either corrected or uploaded as-is
 ```
 
-Thumbnails are served on the fly via Supabase Image Transformations URL parameters (e.g., `?width=400&height=400&resize=cover`).
+Thumbnails are served via Next.js `<Image>` component optimization. Raw images are stored at `object/public` URLs, and Next.js generates responsive `srcset` with automatic format negotiation (WebP/AVIF). This avoids dependency on Supabase Image Transformations (Pro plan feature).
 
 ---
 
@@ -132,9 +132,15 @@ Thumbnails are served on the fly via Supabase Image Transformations URL paramete
 1. Admin navigates to login page
 2. Enters email address
 3. Supabase sends a magic link email
-4. Clicking the link redirects to `works.mathis.day/auth/callback`
-5. Session is persisted (stays logged in until explicit logout)
-6. Admin status is checked via the `profiles.is_admin` column
+4. `emailRedirectTo` is set to `${origin}/auth/callback` (no query params, for clean Supabase redirect matching)
+5. Redirect path stored in `sessionStorage` before OTP request
+6. Clicking the link redirects to the auth callback, which exchanges the code and redirects to `/admin`
+7. Session is persisted (stays logged in until explicit logout)
+8. Admin status is checked via the `profiles.is_admin` column
+
+**Supabase Redirect URLs config must include:**
+- `https://works.mathis.day/auth/callback`
+- `http://localhost:3000/**` (for local development — wildcard pattern)
 
 ### 4.2 Admin Management
 
@@ -187,19 +193,20 @@ User selects image (camera or gallery)
 - Use the `perspective-transform` package for the homography math
 - Two canvases: source (with drag handles) and preview (corrected output)
 - Touch-friendly drag handles for mobile use (large hit targets, visual feedback)
+- Pointer coordinates converted from CSS space to canvas internal coordinates (handles `w-full` CSS scaling)
 - "Reset" button to restart corner placement
 - "Skip" button to use the image as-is (re-encoded to JPEG 80% for consistent quality/size)
 
 ### 5.3 Image Serving
 
-| Context | Source | Size |
-|---|---|---|
-| Grid thumbnail | Supabase Image Transform | `?width=400&resize=contain` |
-| Timeline thumbnail | Supabase Image Transform | `?width=600&resize=contain` |
-| Detail view | Processed image (full) | Original processed dimensions |
-| Lightbox / zoom | Processed image (full) | Original processed dimensions |
+All images stored at `object/public` URLs in Supabase Storage. Resizing and format optimization handled entirely by Next.js `<Image>` component (automatic `srcset`, lazy loading, WebP/AVIF negotiation). No dependency on Supabase Image Transformations.
 
-All images served via Next.js `<Image>` component for automatic `srcset`, lazy loading, and format negotiation.
+| Context | Source | Sizing mechanism |
+|---|---|---|
+| Grid thumbnail | `object/public` URL | Next.js `sizes="(max-width: 768px) 50vw, 33vw"` |
+| Timeline thumbnail | `object/public` URL | Next.js `sizes="280px"` |
+| Detail view | `object/public` URL | Next.js `sizes="(max-width: 768px) 100vw, 80vw"` + `priority` |
+| Thumbnail strip | `object/public` URL | Next.js `sizes="64px"` |
 
 ---
 
@@ -219,35 +226,40 @@ All images served via Next.js `<Image>` component for automatic `srcset`, lazy l
 
 ### 6.2 Gallery Page (`/`)
 
-**Header:**
-- Logo + site name
-- View mode toggle (Grid / Timeline)
+**Site header (sticky):**
+- Logo + site name (hidden on mobile, visible sm+)
+- `aria-label` on logo link for mobile accessibility
+- Skip navigation link for keyboard users
 - Theme toggle (dark/light)
-- Search bar (expands on tap in mobile)
 - Login/Admin button (top right)
 
-**Filter bar (below header):**
-- Tag chips — horizontally scrollable, tap to toggle
-- Date filter — optional, year/month picker
-- Clear filters button
+**Gallery toolbar:**
+- Page heading + view mode toggle (segmented control: Grid / Timeline)
+- Search input with icon — full-width, debounced 300ms
+- Tag chips — **horizontally scrollable** strip (`overflow-x-auto`), `aria-pressed` on each, neo-brutalist styling
+- Date filter — **collapsed by default**, toggled via calendar icon button
+- Clear filters (X) button appears when any filter is active
 
 **Grid view:**
-- Responsive masonry-style grid (2 cols mobile, 3 tablet, 4-5 desktop)
-- Each card: cover image thumbnail, date overlay, tag chips (max 2 + overflow)
+- Responsive masonry-style grid (2 cols mobile, 3 tablet, 4 desktop)
+- Each card: cover image thumbnail, date, description (line-clamp-2), tag chips (max 2 + overflow)
 - Tap/click opens the work detail page
+- Slight rotation + expanded shadow on hover (`hover:rotate-[0.5deg]`)
+- Staggered fade-in animation with `prefers-reduced-motion` fallback
 - Infinite scroll — load 20 works per batch, trigger on scroll near bottom
 
 **Timeline view:**
 - Vertical scroll grouped by month/year (e.g., "February 2026")
-- Each group: month/year header, then a horizontal scroll strip of thumbnails
+- Each group: month/year header on a vertical spine (`border-l-4`), then a horizontal scroll strip of thumbnails
 - Tapping a thumbnail opens the work detail page
-- Lazy load groups as user scrolls down
+- Staggered fade-in animation with `prefers-reduced-motion` fallback
 
 **Search:**
 - Text input searches `description` via Postgres full-text search (`tsvector`)
 - Combined with active tag filters and date range
 - Debounced input (300ms) triggers search
 - Results update in-place in the current view mode
+- URL state synced via query params for deep-linking
 
 ### 6.3 Work Detail Page (`/works/[id]`)
 
@@ -332,9 +344,11 @@ Step-by-step flow:
 
 ### 8.3 Typography
 
-- **Headings**: Caprasimo (Google Fonts) — chunky, playful, organic
+- **Headings**: Caprasimo (Google Fonts) — chunky, playful, organic. `text-pretty` on headings to prevent widows.
 - **Body**: Outfit (Google Fonts) — clean, geometric, structured
 - **Scale**: fluid type using `clamp()` for responsive sizing
+- **Loading**: Google Fonts loaded via `<link>` with `preconnect` (not CSS `@import`) for non-blocking render
+- **Typographic conventions**: Ellipsis character `…` (not `...`), curly quotes where appropriate
 
 ### 8.4 Spacing & Layout
 
@@ -355,6 +369,8 @@ Inline, playful overlapping geometric 'M' SVG logo. Applied to header and export
 - Default: follows system preference via `prefers-color-scheme`
 - User override stored in `localStorage`
 - Tailwind `dark:` variant classes for all themed elements
+- `color-scheme: light` / `color-scheme: dark` on `:root` / `.dark` for native scrollbar and input theming
+- `<meta name="theme-color">` set per color scheme for mobile browser chrome
 
 ---
 
@@ -375,9 +391,11 @@ All errors display explicit user-facing messages per the requirement:
 | Perspective correction fails | "Could not process the image. Please try again or skip correction." |
 
 Implementation:
-- Use a global toast/notification system (shadcn/ui `Sonner` or `Toast`)
+- Use a global toast/notification system (Sonner, themed to neo-brutalist style)
 - Errors are non-blocking toasts for recoverable errors
-- Full-page error states for 404 / critical failures
+- Full-page error states for 404 / critical failures via Next.js error boundaries
+- Server-side data fetching errors propagated (not silently swallowed) so error boundaries can display them
+- Destructive actions (e.g., delete work) use inline confirmation UI instead of `window.confirm()`
 - All API calls wrapped in try/catch with user-friendly messages
 
 ---
@@ -394,9 +412,9 @@ Implementation:
 ### 10.2 Image Optimization
 
 - All processed images stored as JPEG at 80% quality
-- Thumbnails served via Supabase Image Transformations (no pre-generation needed)
-- Next.js `<Image>` generates responsive `srcset` and serves modern formats (WebP/AVIF) when supported
-- Blur placeholder generated from a tiny base64 thumbnail (stored in `images` table or generated at build time)
+- Images served via raw `object/public` URLs from Supabase Storage
+- Next.js `<Image>` handles all optimization: responsive `srcset`, format negotiation (WebP/AVIF), lazy loading
+- No dependency on Supabase Image Transformations (works on all plans)
 
 ### 10.3 Caching
 
@@ -426,7 +444,22 @@ Implementation:
 
 ---
 
-## 12. Scope Boundaries
+## 12. Accessibility
+
+- Skip navigation link in site header
+- `aria-label` on icon-only buttons and the logo link (mobile)
+- `aria-pressed` on filter tag toggle buttons
+- `aria-live="polite"` on async loading messages
+- `name` attributes on all form inputs
+- `focus-visible` ring on all interactive elements (never `outline-none` without replacement)
+- `prefers-reduced-motion` respected: animations gated with `motion-safe:`, fallback `opacity: 1`
+- Semantic HTML: `<header>`, `<main>`, `<section>`, `<article>`, `<nav>` used appropriately
+- Buttons with explicit `transition-[...]` property lists (never `transition: all`)
+- `color-scheme` set for native dark mode support in scrollbars and inputs
+
+---
+
+## 13. Scope Boundaries
 
 ### In scope (v1)
 
@@ -442,6 +475,7 @@ Implementation:
 - Responsive design (mobile-first)
 - Logo and favicon
 - Error messages for all failure states
+- Accessibility (skip links, ARIA, reduced motion, color-scheme)
 - AGENTS.md for Cursor context
 
 ### Out of scope (future)

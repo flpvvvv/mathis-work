@@ -43,8 +43,8 @@ export function TimelineView({ works, backHref }: Props) {
       {monthKeys.map((monthKey, monthIndex) => (
         <section 
           key={monthKey} 
-          className="space-y-4 motion-safe:animate-fade-in-up border-l-4 border-black dark:border-white pl-4 ml-2"
-          style={{ animationDelay: `${Math.min(monthIndex * 0.1, 1)}s`, opacity: 0 }}
+          className="space-y-4 motion-safe:animate-fade-in-up motion-safe:opacity-0 border-l-4 border-black dark:border-white pl-4 ml-2"
+          style={{ animationDelay: `${Math.min(monthIndex * 0.1, 1)}s` }}
         >
           <h2 className="text-2xl font-bold font-display bg-[var(--accent)] inline-block px-3 py-1 border-2 border-black shadow-[var(--shadow-brutal-sm)] dark:text-black">
             {toLabel(grouped[monthKey][0].created_date)}
