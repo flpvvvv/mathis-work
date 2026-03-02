@@ -27,3 +27,4 @@ Public gallery web app for showcasing Mathis's artwork at `works.mathis.day`.
 ## Deployment Notes
 - Vercel + custom domain configuration checklist:
   - `docs/deployment/works-mathis-day-launch-checklist.md`
+- Agent conventions and context: `CLAUDE.md`
