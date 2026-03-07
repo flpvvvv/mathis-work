@@ -73,8 +73,17 @@ async function syncWorkTags(
 ) {
   const normalized = normalizeTags(tags);
 
+  // Get current tags before deleting to check for orphans later
+  const { data: currentWorkTags } = await supabase
+    .from("work_tags")
+    .select("tag_id")
+    .eq("work_id", workId);
+  const oldTagIds = (currentWorkTags ?? []).map((row) => row.tag_id);
+
   await supabase.from("work_tags").delete().eq("work_id", workId);
   if (normalized.length === 0) {
+    // Clean up any orphaned tags from the old tag list
+    await deleteOrphanedTags(supabase, oldTagIds);
     return;
   }
 
@@ -84,6 +93,7 @@ async function syncWorkTags(
     .select("id,name");
 
   if (!upsertedTags || upsertedTags.length === 0) {
+    await deleteOrphanedTags(supabase, oldTagIds);
     return;
   }
 
@@ -93,6 +103,29 @@ async function syncWorkTags(
   }));
 
   await supabase.from("work_tags").insert(workTagsRows);
+
+  // Clean up any orphaned tags from the old tag list
+  await deleteOrphanedTags(supabase, oldTagIds);
+}
+
+async function deleteOrphanedTags(
+  supabase: AdminContext["supabase"],
+  tagIds: string[],
+) {
+  if (tagIds.length === 0) return;
+
+  // Check which tags are still used by other works
+  const { data: stillUsed } = await supabase
+    .from("work_tags")
+    .select("tag_id")
+    .in("tag_id", tagIds);
+
+  const stillUsedIds = new Set((stillUsed ?? []).map((row) => row.tag_id));
+  const orphanTagIds = tagIds.filter((id) => !stillUsedIds.has(id));
+
+  if (orphanTagIds.length > 0) {
+    await supabase.from("tags").delete().in("id", orphanTagIds);
+  }
 }
 
 function normalizeStoragePath(path: string) {
@@ -289,19 +322,8 @@ export async function deleteWork(
     await supabase.storage.from(BUCKET_NAME).remove(storagePaths);
   }
 
-  if (tagIds.length > 0) {
-    const { data: stillUsed } = await supabase
-      .from("work_tags")
-      .select("tag_id")
-      .in("tag_id", tagIds);
-
-    const stillUsedIds = new Set((stillUsed ?? []).map((row) => row.tag_id));
-    const orphanTagIds = tagIds.filter((id) => !stillUsedIds.has(id));
-
-    if (orphanTagIds.length > 0) {
-      await supabase.from("tags").delete().in("id", orphanTagIds);
-    }
-  }
+  // Clean up any orphaned tags
+  await deleteOrphanedTags(supabase, tagIds);
 
   return {
     ok: true,
