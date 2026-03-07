@@ -16,11 +16,11 @@ export function GridView({ works, backHref }: Props) {
   }
 
   return (
-    <div className="columns-2 md:columns-3 xl:columns-4 gap-6 space-y-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
       {works.map((work, index) => (
         <div
           key={work.id}
-          className="motion-safe:animate-fade-in-up motion-safe:opacity-0 break-inside-avoid"
+          className="motion-safe:animate-fade-in-up motion-safe:opacity-0"
           style={{ animationDelay: `${Math.min(index * 0.05, 1)}s` }}
         >
           <WorkCard backHref={backHref} priority={index < 4} work={work} />
