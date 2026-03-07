@@ -3,7 +3,6 @@
 import { LayoutGrid, ListOrdered } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export type ViewMode = "grid" | "timeline";
 
@@ -16,7 +15,7 @@ export function ViewModeToggle({ mode, onChange }: Props) {
   return (
     <div className="inline-flex rounded-none border border-[var(--border)] bg-[var(--surface)] p-1">
       <Button
-        className={cn("h-8 px-3", mode === "grid" ? "" : "shadow-none")}
+        className="h-8 px-3"
         size="sm"
         type="button"
         variant={mode === "grid" ? "default" : "ghost"}
@@ -26,7 +25,7 @@ export function ViewModeToggle({ mode, onChange }: Props) {
         Grid
       </Button>
       <Button
-        className={cn("h-8 px-3", mode === "timeline" ? "" : "shadow-none")}
+        className="h-8 px-3"
         size="sm"
         type="button"
         variant={mode === "timeline" ? "default" : "ghost"}
