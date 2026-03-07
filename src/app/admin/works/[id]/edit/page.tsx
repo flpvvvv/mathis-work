@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { WorkEditor } from "@/components/admin/work-editor";
-import { getWorkById } from "@/lib/data/works";
+import { getTagList, getWorkById } from "@/lib/data/works";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -9,7 +9,7 @@ type Props = {
 
 export default async function AdminEditWorkPage({ params }: Props) {
   const { id } = await params;
-  const work = await getWorkById(id);
+  const [work, tags] = await Promise.all([getWorkById(id), getTagList()]);
 
   if (!work) {
     notFound();
@@ -18,7 +18,7 @@ export default async function AdminEditWorkPage({ params }: Props) {
   return (
     <section className="space-y-4">
       <h2 className="text-xl font-semibold">Edit Work</h2>
-      <WorkEditor mode="edit" work={work} />
+      <WorkEditor mode="edit" work={work} availableTags={tags} />
     </section>
   );
 }

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { TagInput } from "@/components/admin/tag-input";
 import type { EditableImage, SaveWorkPayload } from "@/lib/admin/work-payload";
 import { resolveCoverImageId } from "@/lib/admin/work-utils";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ import type { Work } from "@/lib/types";
 type Props = {
   mode: "create" | "edit";
   work?: Work;
+  /** All existing tags available for selection */
+  availableTags?: string[];
 };
 
 type PendingUpload = {
@@ -45,13 +48,15 @@ const PerspectiveCorrector = dynamic(
   { ssr: false },
 );
 
-export function WorkEditor({ mode, work }: Props) {
+export function WorkEditor({ mode, work, availableTags = [] }: Props) {
   const router = useRouter();
   const [description, setDescription] = useState(work?.description ?? "");
   const [createdDate, setCreatedDate] = useState(
     work?.created_date ?? new Date().toISOString().slice(0, 10),
   );
-  const [tags, setTags] = useState(work?.tags.map((tag) => tag.name).join(", ") ?? "");
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    work?.tags.map((tag) => tag.name.toLowerCase()) ?? [],
+  );
   const [uploads, setUploads] = useState<PendingUpload[]>([]);
   const [images, setImages] = useState<EditableImage[]>(
     (work?.images ?? []).map((image) => ({
@@ -214,10 +219,7 @@ export function WorkEditor({ mode, work }: Props) {
       const basePayload: SaveWorkPayload = {
         description: description.trim(),
         createdDate,
-        tags: tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
+        tags: selectedTags,
         images,
         coverImageId: resolveCoverImageId(images, coverImageId),
       };
@@ -343,14 +345,12 @@ export function WorkEditor({ mode, work }: Props) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tags">Tags (comma-separated)</Label>
-            <Input
-              id="tags"
-              name="tags"
-              autoComplete="off"
-              placeholder="portrait, watercolor…"
-              value={tags}
-              onChange={(event) => setTags(event.target.value)}
+            <Label>Tags</Label>
+            <TagInput
+              availableTags={availableTags}
+              selectedTags={selectedTags}
+              onChange={setSelectedTags}
+              placeholder="Add a new tag…"
             />
           </div>
         </div>
