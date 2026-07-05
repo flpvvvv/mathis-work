@@ -332,40 +332,6 @@ export function WorkEditor({ mode, work, availableTags = [] }: Props) {
   return (
     <Card className="p-4">
       <form className="space-y-4" onSubmit={onSubmit}>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="created-date">Created date</Label>
-            <Input
-              id="created-date"
-              name="created-date"
-              required
-              type="date"
-              value={createdDate}
-              onChange={(event) => setCreatedDate(event.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Tags</Label>
-            <TagInput
-              availableTags={availableTags}
-              selectedTags={selectedTags}
-              onChange={setSelectedTags}
-              placeholder="Add a new tag…"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            name="description"
-            placeholder="Describe this artwork…"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-          />
-        </div>
-
         <div className="space-y-2">
           <Label htmlFor="images">Images</Label>
           <div className="space-y-2 rounded-none border border-[var(--border)] p-3">
@@ -494,8 +460,43 @@ export function WorkEditor({ mode, work, availableTags = [] }: Props) {
             multiple
             accept="image/*"
             type="file"
+            className="file:mr-4 file:cursor-pointer file:border-2 file:border-primary file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground file:transition-opacity hover:file:opacity-85"
             onChange={(event) => onFilesSelected(event.target.files)}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            name="description"
+            placeholder="Describe this artwork…"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <TagInput
+              availableTags={availableTags}
+              selectedTags={selectedTags}
+              onChange={setSelectedTags}
+              placeholder="Add a new tag…"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="created-date">Created date</Label>
+            <Input
+              id="created-date"
+              name="created-date"
+              required
+              type="date"
+              value={createdDate}
+              onChange={(event) => setCreatedDate(event.target.value)}
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
