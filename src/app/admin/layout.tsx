@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { PropsWithChildren } from "react";
 
 import { requireAdmin } from "@/lib/auth";
+import { buttonVariants } from "@/components/ui/button";
 
 export default async function AdminLayout({ children }: PropsWithChildren) {
   await requireAdmin();
@@ -15,23 +16,23 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
             Manage artworks and metadata.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Link
-            className="inline-flex h-10 items-center rounded-none border border-[var(--border)] px-4 text-sm"
-            href="/admin"
-          >
-            Dashboard
-          </Link>
-          <Link
-            className="inline-flex h-10 items-center rounded-none border border-[var(--border)] px-4 text-sm"
             href="/admin/new"
+            className={buttonVariants({ variant: "default" })}
           >
             New Work
           </Link>
+          <Link
+            href="/admin"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Dashboard
+          </Link>
           <form action="/auth/logout" method="post">
             <button
-              className="inline-flex h-10 items-center rounded-none border border-[var(--border)] px-4 text-sm"
               type="submit"
+              className={buttonVariants({ variant: "ghost" })}
             >
               Logout
             </button>
