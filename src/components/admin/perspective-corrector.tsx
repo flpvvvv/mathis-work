@@ -1,6 +1,14 @@
 "use client";
 
-import { Loader2, RotateCcw } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Loader2,
+  RotateCcw,
+  ScanEye,
+} from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -25,6 +33,14 @@ type Props = {
   onApply: (result: JpegResult) => void;
 };
 
+const CORNER_LABELS = ["TL", "TR", "BR", "BL"];
+const HANDLE_RADIUS = 14;
+/** CSS-pixel hit radius — generous for finger taps */
+const HIT_RADIUS_CSS = 40;
+/** Pixels of pointer movement below which a touch is a tap (selection) not a drag */
+const TAP_THRESHOLD = 4;
+const NUDGE_STEP = 1;
+
 function defaultPoints(width: number, height: number): Point[] {
   const marginX = width * 0.08;
   const marginY = height * 0.08;
@@ -46,9 +62,14 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [points, setPoints] = useState<Point[] | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [detectError, setDetectError] = useState<string | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
+  // Load image and kick off AI detection
   useEffect(() => {
     let disposed = false;
 
@@ -70,6 +91,57 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
     };
   }, [file]);
 
+  // AI-powered corner detection
+  useEffect(() => {
+    if (!image) return;
+
+    let disposed = false;
+    async function detect() {
+      setIsDetecting(true);
+      setDetectError(null);
+      try {
+        const formData = new FormData();
+        formData.append("image", file);
+        const response = await fetch("/api/admin/perspective-detect", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok || disposed) return;
+
+        const data = (await response.json()) as {
+          points?: Array<{ x: number; y: number }>;
+          error?: string;
+        };
+
+        if (data.points && data.points.length === 4 && !disposed && image) {
+          const { naturalWidth, naturalHeight } = image;
+          setPoints(
+            data.points.map((p) => ({
+              x: p.x * naturalWidth,
+              y: p.y * naturalHeight,
+            })),
+          );
+        } else if (data.error && !disposed) {
+          setDetectError(data.error);
+        }
+      } catch {
+        if (!disposed) {
+          setDetectError(
+            "Could not reach AI detection. Adjust corners manually.",
+          );
+        }
+      } finally {
+        if (!disposed) setIsDetecting(false);
+      }
+    }
+
+    void detect();
+    return () => {
+      disposed = true;
+    };
+  }, [image, file]);
+
   const displaySize = useMemo(() => {
     if (!image) return null;
     const maxWidth = 900;
@@ -87,13 +159,9 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
     }
 
     const canvas = sourceCanvasRef.current;
-    if (!canvas) {
-      return;
-    }
+    if (!canvas) return;
     const context = canvas.getContext("2d");
-    if (!context) {
-      return;
-    }
+    if (!context) return;
 
     canvas.width = displaySize.width;
     canvas.height = displaySize.height;
@@ -105,6 +173,7 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
       y: point.y * displaySize.scale,
     }));
 
+    // Quadrilateral outline
     context.strokeStyle = "#ff6b6b";
     context.lineWidth = 2;
     context.beginPath();
@@ -115,40 +184,113 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
     context.closePath();
     context.stroke();
 
+    // Corner handles + labels
     scaledPoints.forEach((point, index) => {
-      context.fillStyle = index === draggingIndex ? "#ffe66d" : "#ff6b6b";
+      const isActive =
+        index === draggingIndex || index === selectedIndex;
+      context.fillStyle = isActive ? "#ffe66d" : "#ff6b6b";
       context.beginPath();
-      context.arc(point.x, point.y, 8, 0, Math.PI * 2);
+      context.arc(point.x, point.y, HANDLE_RADIUS, 0, Math.PI * 2);
       context.fill();
       context.strokeStyle = "#ffffff";
       context.lineWidth = 2;
       context.stroke();
+
+      // Corner label
+      const label = CORNER_LABELS[index];
+      const offset = HANDLE_RADIUS + 14;
+      context.font = "bold 12px ui-monospace, monospace";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      const labelX = point.x + (index <= 1 ? offset : -offset);
+      const labelY = point.y + (index <= 1 ? -offset : offset);
+      // Background pill
+      const metrics = context.measureText(label);
+      const padX = 6;
+      const padY = 3;
+      context.fillStyle = "rgba(0,0,0,0.6)";
+      context.fillRect(
+        labelX - metrics.width / 2 - padX,
+        labelY - 8 - padY,
+        metrics.width + padX * 2,
+        16 + padY * 2,
+      );
+      context.fillStyle = "#ffffff";
+      context.fillText(label, labelX, labelY);
     });
 
+    // Preview
     const previewCanvas = previewCanvasRef.current;
-    if (!previewCanvas) {
-      return;
-    }
+    if (!previewCanvas) return;
 
     const sourceForPreview = document.createElement("canvas");
     sourceForPreview.width = displaySize.width;
     sourceForPreview.height = displaySize.height;
     const previewSourceContext = sourceForPreview.getContext("2d");
-    if (!previewSourceContext) {
-      return;
-    }
-    previewSourceContext.drawImage(image, 0, 0, displaySize.width, displaySize.height);
-
-    drawPerspectiveToCanvas(
-      sourceForPreview,
-      scaledPoints,
-      previewCanvas,
+    if (!previewSourceContext) return;
+    previewSourceContext.drawImage(
+      image,
+      0,
+      0,
+      displaySize.width,
+      displaySize.height,
     );
-  }, [displaySize, draggingIndex, image, points]);
+
+    drawPerspectiveToCanvas(sourceForPreview, scaledPoints, previewCanvas);
+  }, [displaySize, draggingIndex, selectedIndex, image, points]);
 
   useEffect(() => {
     draw();
   }, [draw]);
+
+  // Keyboard nudge for selected corner
+  useEffect(() => {
+    if (selectedIndex === null || !points || !image) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+
+      let dx = 0;
+      let dy = 0;
+      switch (event.key) {
+        case "ArrowLeft":
+          dx = -NUDGE_STEP;
+          break;
+        case "ArrowRight":
+          dx = NUDGE_STEP;
+          break;
+        case "ArrowUp":
+          dy = -NUDGE_STEP;
+          break;
+        case "ArrowDown":
+          dy = NUDGE_STEP;
+          break;
+        case "Escape":
+          setSelectedIndex(null);
+          return;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+      if (!image) return;
+      const idx = selectedIndex;
+      const { naturalWidth, naturalHeight } = image;
+      setPoints((current) => {
+        if (!current || idx === null) return current;
+        const next = [...current];
+        const p = next[idx];
+        next[idx] = {
+          x: clamp(p.x + dx, 0, naturalWidth),
+          y: clamp(p.y + dy, 0, naturalHeight),
+        };
+        return next;
+      });
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedIndex, points, image]);
 
   function cssToCanvas(
     event: PointerEvent<HTMLCanvasElement>,
@@ -169,9 +311,7 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
     }
 
     const canvas = sourceCanvasRef.current;
-    if (!canvas) {
-      return;
-    }
+    if (!canvas) return;
 
     const { x, y } = cssToCanvas(event, canvas);
     const cx = clamp(x, 0, canvas.width);
@@ -189,50 +329,73 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
   }
 
   function onPointerDown(event: PointerEvent<HTMLCanvasElement>) {
-    if (!points || !displaySize) {
-      return;
-    }
+    if (!points || !displaySize) return;
     const canvas = sourceCanvasRef.current;
-    if (!canvas) {
-      return;
-    }
+    if (!canvas) return;
 
     const { x, y } = cssToCanvas(event, canvas);
+    pointerStartRef.current = { x, y };
 
     const scaled = points.map((point) => ({
       x: point.x * displaySize.scale,
       y: point.y * displaySize.scale,
     }));
 
-    const hitRadius = 20 * (canvas.width / canvas.getBoundingClientRect().width);
+    const hitRadius = HIT_RADIUS_CSS * (canvas.width / canvas.getBoundingClientRect().width);
     const targetIndex = scaled.findIndex(
-      (point) => Math.hypot(point.x - x, point.y - y) <= hitRadius,
+      (pt) => Math.hypot(pt.x - x, pt.y - y) <= hitRadius,
     );
 
     if (targetIndex !== -1) {
       setDraggingIndex(targetIndex);
+      setSelectedIndex(null);
       event.currentTarget.setPointerCapture(event.pointerId);
+    } else {
+      // Tapped on empty canvas area — deselect
+      setSelectedIndex(null);
     }
   }
 
   function onPointerMove(event: PointerEvent<HTMLCanvasElement>) {
-    if (draggingIndex === null) {
-      return;
-    }
+    if (draggingIndex === null) return;
     updatePointFromPointer(event);
   }
 
   function onPointerUp(event: PointerEvent<HTMLCanvasElement>) {
     if (draggingIndex !== null) {
       updatePointFromPointer(event);
+
+      // Distinguish tap from drag
+      const canvas = sourceCanvasRef.current;
+      const start = pointerStartRef.current;
+      if (canvas && start) {
+        const { x, y } = cssToCanvas(event, canvas);
+        const dist = Math.hypot(x - start.x, y - start.y);
+        if (dist <= TAP_THRESHOLD) {
+          setSelectedIndex(draggingIndex);
+        }
+      }
     }
     setDraggingIndex(null);
+    pointerStartRef.current = null;
+  }
+
+  function nudgeCorner(index: number, dx: number, dy: number) {
+    if (!image || !points) return;
+    setPoints((current) => {
+      if (!current) return current;
+      const next = [...current];
+      const p = next[index];
+      next[index] = {
+        x: clamp(p.x + dx, 0, image.naturalWidth),
+        y: clamp(p.y + dy, 0, image.naturalHeight),
+      };
+      return next;
+    });
   }
 
   async function applyCorrection() {
-    if (!image || !points) {
-      return;
-    }
+    if (!image || !points) return;
 
     setIsApplying(true);
     setError(null);
@@ -240,7 +403,9 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
       const corrected = await correctPerspectiveToJpeg(image, points, 0.8);
       onApply(corrected);
     } catch {
-      setError("Could not process the image. Please try again or skip correction.");
+      setError(
+        "Could not process the image. Please try again or skip correction.",
+      );
     } finally {
       setIsApplying(false);
     }
@@ -248,7 +413,48 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
 
   function resetPoints() {
     if (!image) return;
+    setSelectedIndex(null);
     setPoints(defaultPoints(image.naturalWidth, image.naturalHeight));
+  }
+
+  async function retryDetection() {
+    if (!image) return;
+    setIsDetecting(true);
+    setDetectError(null);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const response = await fetch("/api/admin/perspective-detect", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        setDetectError("AI detection failed. Adjust corners manually.");
+        return;
+      }
+
+      const data = (await response.json()) as {
+        points?: Array<{ x: number; y: number }>;
+        error?: string;
+      };
+
+      if (data.points && data.points.length === 4) {
+        setPoints(
+          data.points.map((p) => ({
+            x: p.x * image.naturalWidth,
+            y: p.y * image.naturalHeight,
+          })),
+        );
+        setSelectedIndex(null);
+      } else if (data.error) {
+        setDetectError(data.error);
+      }
+    } catch {
+      setDetectError("Could not reach AI detection. Adjust corners manually.");
+    } finally {
+      setIsDetecting(false);
+    }
   }
 
   return (
@@ -256,22 +462,78 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
       <div className="space-y-1">
         <h3 className="text-lg font-semibold">Perspective Correction</h3>
         <p className="text-sm text-[var(--text-secondary)]">
-          Drag the four corner handles to match the painting edges.
+          {selectedIndex !== null
+            ? `Corner ${CORNER_LABELS[selectedIndex]} selected — use arrows to nudge or tap another corner.`
+            : "Tap a corner to select it, or drag to move. Arrow keys nudge the selected corner."}
         </p>
       </div>
 
       {error ? (
-        <p className="rounded-none border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-none border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
           {error}
+        </p>
+      ) : null}
+
+      {detectError ? (
+        <p className="rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
+          {detectError}
+        </p>
+      ) : null}
+
+      {isDetecting ? (
+        <p className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+          <Loader2 className="size-4 animate-spin" />
+          Detecting corners with AI…
         </p>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-2">
-          <p className="text-sm font-medium">Source</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Source</p>
+            {selectedIndex !== null && points && image ? (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-[var(--text-secondary)]">
+                  Nudge {CORNER_LABELS[selectedIndex]}:
+                </span>
+                <button
+                  type="button"
+                  aria-label="Nudge up"
+                  className="inline-flex size-7 items-center justify-center rounded-none border border-[var(--border)] hover:bg-[var(--accent)]"
+                  onClick={() => nudgeCorner(selectedIndex, 0, -NUDGE_STEP)}
+                >
+                  <ArrowUp className="size-3" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Nudge down"
+                  className="inline-flex size-7 items-center justify-center rounded-none border border-[var(--border)] hover:bg-[var(--accent)]"
+                  onClick={() => nudgeCorner(selectedIndex, 0, NUDGE_STEP)}
+                >
+                  <ArrowDown className="size-3" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Nudge left"
+                  className="inline-flex size-7 items-center justify-center rounded-none border border-[var(--border)] hover:bg-[var(--accent)]"
+                  onClick={() => nudgeCorner(selectedIndex, -NUDGE_STEP, 0)}
+                >
+                  <ArrowLeft className="size-3" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Nudge right"
+                  className="inline-flex size-7 items-center justify-center rounded-none border border-[var(--border)] hover:bg-[var(--accent)]"
+                  onClick={() => nudgeCorner(selectedIndex, NUDGE_STEP, 0)}
+                >
+                  <ArrowRight className="size-3" />
+                </button>
+              </div>
+            ) : null}
+          </div>
           <canvas
             ref={sourceCanvasRef}
-            className="w-full rounded-none border border-[var(--border)] bg-black/5 dark:bg-white/5 touch-none"
+            className="w-full rounded-none border border-[var(--border)] bg-black/5 dark:bg-white/5 touch-none cursor-crosshair"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -288,14 +550,38 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" onClick={resetPoints}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isDetecting}
+          onClick={retryDetection}
+        >
+          {isDetecting ? (
+            <Loader2 className="mr-2 size-4 animate-spin" />
+          ) : (
+            <ScanEye className="mr-2 size-4" />
+          )}
+          Detect corners
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={resetPoints}>
           <RotateCcw className="mr-2 size-4" />
           Reset corners
         </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onCancel}
+        >
           Skip
         </Button>
-        <Button disabled={isApplying} type="button" onClick={applyCorrection}>
+        <Button
+          disabled={isApplying}
+          type="button"
+          size="sm"
+          onClick={applyCorrection}
+        >
           {isApplying ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
           Apply correction
         </Button>
