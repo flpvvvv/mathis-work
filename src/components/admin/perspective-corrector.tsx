@@ -22,6 +22,10 @@ import { Button } from "@/components/ui/button";
 import type { JpegResult } from "@/lib/image/jpeg";
 import { loadImageFromBlob } from "@/lib/image/jpeg";
 import {
+  detectPaperCorners,
+  refineCornersOnImage,
+} from "@/lib/image/detect-paper-corners";
+import {
   correctPerspectiveToJpeg,
   drawPerspectiveToCanvas,
   type Point,
@@ -54,6 +58,76 @@ function defaultPoints(width: number, height: number): Point[] {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function normalizedToNaturalPoints(
+  points: Array<{ x: number; y: number }>,
+  width: number,
+  height: number,
+): Point[] {
+  return points.map((point) => ({
+    x: point.x * width,
+    y: point.y * height,
+  }));
+}
+
+async function detectCornersWithAi(
+  file: File,
+): Promise<Array<{ x: number; y: number }> | null> {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await fetch("/api/admin/perspective-detect", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as {
+    points?: Array<{ x: number; y: number }>;
+    error?: string;
+  };
+
+  return data.points?.length === 4 ? data.points : null;
+}
+
+async function detectCorners(
+  image: HTMLImageElement,
+  file: File,
+): Promise<{ points: Point[] | null; error: string | null }> {
+  const local = detectPaperCorners(image);
+  if (local) {
+    return { points: local, error: null };
+  }
+
+  try {
+    const aiPoints = await detectCornersWithAi(file);
+    if (!aiPoints) {
+      return {
+        points: null,
+        error: "Could not auto-detect corners. Adjust them manually.",
+      };
+    }
+
+    const natural = normalizedToNaturalPoints(
+      aiPoints,
+      image.naturalWidth,
+      image.naturalHeight,
+    );
+    const refined = refineCornersOnImage(image, natural);
+
+    return {
+      points: refined ?? natural,
+      error: null,
+    };
+  } catch {
+    return {
+      points: null,
+      error: "Could not reach AI detection. Adjust corners manually.",
+    };
+  }
 }
 
 export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
@@ -91,52 +165,30 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
     };
   }, [file]);
 
-  // AI-powered corner detection
+  // Auto-detect corners (local paper detection first, AI fallback)
   useEffect(() => {
     if (!image) return;
+    const loadedImage = image;
 
     let disposed = false;
-    async function detect() {
+    async function runDetection() {
       setIsDetecting(true);
       setDetectError(null);
       try {
-        const formData = new FormData();
-        formData.append("image", file);
-        const response = await fetch("/api/admin/perspective-detect", {
-          method: "POST",
-          body: formData,
-        });
+        const result = await detectCorners(loadedImage, file);
+        if (disposed) return;
 
-        if (!response.ok || disposed) return;
-
-        const data = (await response.json()) as {
-          points?: Array<{ x: number; y: number }>;
-          error?: string;
-        };
-
-        if (data.points && data.points.length === 4 && !disposed && image) {
-          const { naturalWidth, naturalHeight } = image;
-          setPoints(
-            data.points.map((p) => ({
-              x: p.x * naturalWidth,
-              y: p.y * naturalHeight,
-            })),
-          );
-        } else if (data.error && !disposed) {
-          setDetectError(data.error);
-        }
-      } catch {
-        if (!disposed) {
-          setDetectError(
-            "Could not reach AI detection. Adjust corners manually.",
-          );
+        if (result.points) {
+          setPoints(result.points);
+        } else if (result.error) {
+          setDetectError(result.error);
         }
       } finally {
         if (!disposed) setIsDetecting(false);
       }
     }
 
-    void detect();
+    void runDetection();
     return () => {
       disposed = true;
     };
@@ -422,36 +474,13 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
     setIsDetecting(true);
     setDetectError(null);
     try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const response = await fetch("/api/admin/perspective-detect", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        setDetectError("AI detection failed. Adjust corners manually.");
-        return;
-      }
-
-      const data = (await response.json()) as {
-        points?: Array<{ x: number; y: number }>;
-        error?: string;
-      };
-
-      if (data.points && data.points.length === 4) {
-        setPoints(
-          data.points.map((p) => ({
-            x: p.x * image.naturalWidth,
-            y: p.y * image.naturalHeight,
-          })),
-        );
+      const result = await detectCorners(image, file);
+      if (result.points) {
+        setPoints(result.points);
         setSelectedIndex(null);
-      } else if (data.error) {
-        setDetectError(data.error);
+      } else if (result.error) {
+        setDetectError(result.error);
       }
-    } catch {
-      setDetectError("Could not reach AI detection. Adjust corners manually.");
     } finally {
       setIsDetecting(false);
     }
@@ -483,7 +512,7 @@ export function PerspectiveCorrector({ file, onCancel, onApply }: Props) {
       {isDetecting ? (
         <p className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
           <Loader2 className="size-4 animate-spin" />
-          Detecting corners with AI…
+          Detecting paper corners…
         </p>
       ) : null}
 

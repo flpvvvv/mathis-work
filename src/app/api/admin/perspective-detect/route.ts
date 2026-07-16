@@ -4,11 +4,20 @@ const GEMINI_API_KEY = process.env.GOOGLE_AI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 
 const DETECTION_PROMPT =
-  "Detect the 4 corners of the main rectangular artwork, painting, drawing, " +
-  "or picture frame visible in this photo. The photo may show the artwork on a " +
-  "wall, desk, easel, or held in hand — find the largest rectangular subject. " +
-  "Order corners: top-left, top-right, bottom-right, bottom-left. " +
-  "Return each as a fraction 0.0–1.0 of the full image width and height.";
+  "You are detecting corners for perspective correction of artwork photos.\n\n" +
+  "Typical photo: a rectangular drawing or painting on white/off-white paper " +
+  "(often A4) that fills most of the frame. The paper is usually much brighter " +
+  "than the surrounding background (desk, floor, wall, hands, shadows).\n\n" +
+  "Task: find the 4 outer corners of the PAPER SHEET itself — where the white " +
+  "paper meets the darker background. Place each corner exactly on the paper " +
+  "edge, not on the drawing inside, not on the image border, and not on shadows " +
+  "cast on the paper.\n\n" +
+  "Ignore hands, clips, tape, pencils, or other objects unless they cover the " +
+  "paper edge. If multiple rectangles exist, choose the largest bright paper " +
+  "sheet that contains the artwork.\n\n" +
+  "Return corners in this order: top-left, top-right, bottom-right, bottom-left. " +
+  "Use normalized coordinates from 0.0 to 1.0 relative to the full image width " +
+  "and height.";
 
 export async function POST(request: Request) {
   if (!GEMINI_API_KEY) {
