@@ -69,10 +69,10 @@ export function GalleryFilters({ filters, tags, onChange, onClear }: Props) {
             })}
           </div>
 
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               aria-label="Toggle date filter"
-              className={cn("h-8 w-8", showDates && "bg-[var(--accent)] text-black")}
+              className={cn("h-11 w-11", showDates && "bg-[var(--accent)] text-black")}
               size="icon"
               type="button"
               variant="outline"
@@ -83,7 +83,7 @@ export function GalleryFilters({ filters, tags, onChange, onClear }: Props) {
             {hasFilters && (
               <Button
                 aria-label="Clear all filters"
-                className="h-8 w-8"
+                className="h-11 w-11"
                 size="icon"
                 type="button"
                 variant="outline"
@@ -100,7 +100,7 @@ export function GalleryFilters({ filters, tags, onChange, onClear }: Props) {
         <div className="flex gap-2">
           <Input
             aria-label="From date"
-            className="h-9 text-sm"
+            className="h-11 text-sm"
             name="filter-from"
             type="date"
             value={filters.from}
@@ -110,7 +110,7 @@ export function GalleryFilters({ filters, tags, onChange, onClear }: Props) {
           />
           <Input
             aria-label="To date"
-            className="h-9 text-sm"
+            className="h-11 text-sm"
             name="filter-to"
             type="date"
             value={filters.to}

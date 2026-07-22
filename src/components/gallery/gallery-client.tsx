@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -116,6 +116,20 @@ export function GalleryClient({
   }, [viewMode]);
 
   useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
+        const input = document.querySelector<HTMLInputElement>(
+          'input[name="search"]',
+        );
+        input?.focus();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     const timer = window.setTimeout(() => {
       setDebouncedFilters(filters);
     }, 300);
@@ -173,23 +187,34 @@ export function GalleryClient({
         <ViewModeToggle mode={viewMode} onChange={setViewMode} />
       </div>
 
-      <div className="relative">
+      <div aria-label="Search artworks" className="relative" role="search">
         <Search
           aria-hidden="true"
-          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--text-secondary)]"
+          className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[var(--text-secondary)]"
         />
         <Input
-          aria-label="Search artworks"
           autoComplete="off"
-          className="h-10 pl-10 text-sm"
+          className="h-12 pl-12 pr-12 text-base"
+          enterKeyHint="search"
+          inputMode="search"
           name="search"
-          placeholder="Search descriptions…"
+          placeholder="Search artworks…"
           spellCheck={false}
           value={filters.query}
           onChange={(event) =>
             setFilters({ ...filters, query: event.target.value })
           }
         />
+        {filters.query && (
+          <button
+            aria-label="Clear search"
+            className="absolute right-1 top-1 bottom-1 grid aspect-square place-items-center transition-colors hover:bg-[var(--accent)] cursor-pointer"
+            type="button"
+            onClick={() => setFilters({ ...filters, query: "" })}
+          >
+            <X className="size-4" />
+          </button>
+        )}
       </div>
 
       <GalleryFilters
@@ -198,6 +223,32 @@ export function GalleryClient({
         onChange={setFilters}
         onClear={() => setFilters(defaultFilters)}
       />
+
+      {(() => {
+        const active =
+          Boolean(
+            debouncedFilters.query ||
+              debouncedFilters.tags.length ||
+              debouncedFilters.from ||
+              debouncedFilters.to,
+          );
+        if (!active) return null;
+        if (query.isFetching && !query.isFetchingNextPage) {
+          return (
+            <p aria-live="polite" className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+              <Loader2 className="size-4 animate-spin" />
+              Searching…
+            </p>
+          );
+        }
+        return (
+          <p aria-live="polite" className="text-sm text-[var(--text-secondary)]">
+            {works.length > 0
+              ? `${works.length} ${works.length === 1 ? "work" : "works"} found`
+              : "No works match your search"}
+          </p>
+        );
+      })()}
 
       {viewMode === "grid" ? (
         <GridView backHref={backHref} works={works} />
