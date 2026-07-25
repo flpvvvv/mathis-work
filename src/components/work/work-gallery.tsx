@@ -48,26 +48,28 @@ export function WorkGallery({ images, initialImageId, altText }: Props) {
 
         {hasMultiple ? (
           <>
-            <Button
-              aria-label="Previous image"
-              className="absolute left-2 top-1/2 -translate-y-1/2"
-              size="icon"
-              type="button"
-              variant="outline"
-              onClick={() => setIndex((prev) => (prev - 1 + images.length) % images.length)}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button
-              aria-label="Next image"
-              className="absolute right-2 top-1/2 -translate-y-1/2"
-              size="icon"
-              type="button"
-              variant="outline"
-              onClick={() => setIndex((prev) => (prev + 1) % images.length)}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
+            <div className="absolute left-2 top-1/2 -translate-y-1/2">
+              <Button
+                aria-label="Previous image"
+                size="icon"
+                type="button"
+                variant="outline"
+                onClick={() => setIndex((prev) => (prev - 1 + images.length) % images.length)}
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+            </div>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <Button
+                aria-label="Next image"
+                size="icon"
+                type="button"
+                variant="outline"
+                onClick={() => setIndex((prev) => (prev + 1) % images.length)}
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
           </>
         ) : null}
       </div>
