@@ -1,5 +1,54 @@
 import { NextResponse } from "next/server";
 
+/**
+ * Read image dimensions from JPEG or PNG buffer headers.
+ * Returns null for unsupported formats.
+ */
+function getImageDimensions(
+  buffer: Buffer,
+): { width: number; height: number } | null {
+  // JPEG: scan for SOF0/SOF2 marker (0xFF 0xC0 or 0xFF 0xC2)
+  if (buffer[0] === 0xff && buffer[1] === 0xd8) {
+    let offset = 2;
+    while (offset < buffer.length - 10) {
+      if (buffer[offset] !== 0xff) return null;
+      const marker = buffer[offset + 1];
+      // SOF0 (baseline) or SOF2 (progressive)
+      if (marker === 0xc0 || marker === 0xc2) {
+        const height = buffer.readUInt16BE(offset + 5);
+        const width = buffer.readUInt16BE(offset + 7);
+        return { width, height };
+      }
+      const segmentLength = buffer.readUInt16BE(offset + 2);
+      offset += 2 + segmentLength;
+    }
+    return null;
+  }
+
+  // PNG: IHDR chunk follows 8-byte signature
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    if (buffer.length < 24) return null;
+    const width = buffer.readUInt32BE(16);
+    const height = buffer.readUInt32BE(20);
+    return { width, height };
+  }
+
+  return null;
+}
+
+function clampNormalized(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
 const GEMINI_API_KEY = process.env.GOOGLE_AI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 
@@ -15,9 +64,11 @@ const DETECTION_PROMPT =
   "Ignore hands, clips, tape, pencils, or other objects unless they cover the " +
   "paper edge. If multiple rectangles exist, choose the largest bright paper " +
   "sheet that contains the artwork.\n\n" +
-  "Return corners in this order: top-left, top-right, bottom-right, bottom-left. " +
-  "Use normalized coordinates from 0.0 to 1.0 relative to the full image width " +
-  "and height.";
+  "Return corners in this order: top-left, top-right, bottom-right, bottom-left.\n\n" +
+  "CRITICAL — use NORMALIZED coordinates from 0.0 to 1.0 (NOT pixel coordinates). " +
+  "0.0 = left/top edge, 1.0 = right/bottom edge of the full image. " +
+  "For example, if the paper is centered and fills 80% of the image, " +
+  "corners would be around 0.1–0.9, never values like 200 or 1080.";
 
 export async function POST(request: Request) {
   if (!GEMINI_API_KEY) {
@@ -79,8 +130,16 @@ export async function POST(request: Request) {
                 items: {
                   type: "OBJECT",
                   properties: {
-                    x: { type: "NUMBER" },
-                    y: { type: "NUMBER" },
+                    x: {
+                      type: "NUMBER",
+                      description:
+                        "Normalized x coordinate from 0.0 to 1.0. 0.0 is the left edge, 1.0 is the right edge of the image.",
+                    },
+                    y: {
+                      type: "NUMBER",
+                      description:
+                        "Normalized y coordinate from 0.0 to 1.0. 0.0 is the top edge, 1.0 is the bottom edge of the image.",
+                    },
                   },
                   required: ["x", "y"],
                 },
@@ -133,12 +192,32 @@ export async function POST(request: Request) {
         { status: 502 },
       );
     }
+    // Normalize coordinates to 0–1 range.
+    // Gemini sometimes returns pixel coordinates despite the prompt;
+    // detect this and scale down using actual image dimensions.
+    const dims = getImageDimensions(buffer);
 
-    // Clamp coordinates to 0–1 range
-    const points = parsed.points.map((p) => ({
-      x: Math.max(0, Math.min(1, p.x)),
-      y: Math.max(0, Math.min(1, p.y)),
-    }));
+    let points: Array<{ x: number; y: number }>;
+    if (dims) {
+      const anyPixelCoords = parsed.points.some((p) => p.x > 1.5 || p.y > 1.5);
+      if (anyPixelCoords) {
+        points = parsed.points.map((p) => ({
+          x: clampNormalized(p.x / dims.width),
+          y: clampNormalized(p.y / dims.height),
+        }));
+      } else {
+        points = parsed.points.map((p) => ({
+          x: clampNormalized(p.x),
+          y: clampNormalized(p.y),
+        }));
+      }
+    } else {
+      // Unknown format — clamp blindly
+      points = parsed.points.map((p) => ({
+        x: clampNormalized(p.x),
+        y: clampNormalized(p.y),
+      }));
+    }
 
     return NextResponse.json({ points });
   } catch (err) {
