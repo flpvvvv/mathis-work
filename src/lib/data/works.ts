@@ -62,6 +62,7 @@ function toWork(item: RawWork, options?: { coverOnly?: boolean }): Work {
     updated_at: item.updated_at,
     // Public gallery only needs one image, which reduces client payload size.
     images: options?.coverOnly ? (coverImage ? [coverImage] : []) : sortedImages,
+    image_count: (item.images ?? []).length,
     tags: (item.work_tags ?? []).flatMap((entry) => {
       if (!entry.tags) {
         return [];

@@ -52,6 +52,11 @@ export function WorkCard({ work, backHref, priority }: Props) {
             No image
           </div>
         )}
+        {work.image_count > 1 && (
+          <span className="absolute top-2 right-2 flex h-6 min-w-6 items-center justify-center border-2 border-[var(--border)] bg-[var(--surface)] px-1.5 text-xs font-bold leading-none text-[var(--text)] shadow-[2px_2px_0_var(--border)] tabular-nums">
+            {work.image_count}
+          </span>
+        )}
       </div>
       <div className="space-y-2 p-3">
         <p className="text-xs text-[var(--text-secondary)]">

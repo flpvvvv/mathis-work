@@ -22,6 +22,7 @@ export type Work = {
   updated_at: string;
   images: WorkImage[];
   tags: WorkTag[];
+  image_count: number;
 };
 
 export type Profile = {
