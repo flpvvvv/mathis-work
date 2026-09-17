@@ -3,7 +3,13 @@
 import { Loader2, Search, X } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import {
   GalleryFilters,
@@ -34,6 +40,18 @@ type Props = {
 };
 
 const VIEW_MODE_KEY = "mathis-gallery:view-mode";
+
+function subscribeToStoredViewMode(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
+
+const readStoredViewMode = (): ViewMode | null => {
+  const saved = localStorage.getItem(VIEW_MODE_KEY);
+  return saved === "grid" || saved === "timeline" ? saved : null;
+};
+
+const readServerViewMode = () => null;
 
 const defaultFilters: GalleryFiltersState = {
   query: "",
@@ -97,23 +115,25 @@ export function GalleryClient({
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const [viewMode, setViewMode] = useState<ViewMode>(initialMode);
+  const storedViewMode = useSyncExternalStore(
+    subscribeToStoredViewMode,
+    readStoredViewMode,
+    readServerViewMode,
+  );
+  const [chosenViewMode, setChosenViewMode] = useState<ViewMode | null>(null);
+  const viewMode: ViewMode =
+    chosenViewMode ??
+    (modeFromQuery ? initialMode : (storedViewMode ?? initialMode));
   const [filters, setFilters] = useState<GalleryFiltersState>(initialFilters);
   const [debouncedFilters, setDebouncedFilters] =
     useState<GalleryFiltersState>(initialFilters);
 
   useEffect(() => {
-    if (!modeFromQuery) {
-      const saved = localStorage.getItem(VIEW_MODE_KEY);
-      if (saved === "grid" || saved === "timeline") {
-        setViewMode(saved);
-      }
+    if (chosenViewMode === null && !modeFromQuery && storedViewMode === null) {
+      return;
     }
-  }, [modeFromQuery]);
-
-  useEffect(() => {
     localStorage.setItem(VIEW_MODE_KEY, viewMode);
-  }, [viewMode]);
+  }, [chosenViewMode, modeFromQuery, storedViewMode, viewMode]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -184,7 +204,7 @@ export function GalleryClient({
         <h1 className="text-4xl text-pretty md:text-5xl font-display uppercase tracking-tight font-bold drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] dark:drop-shadow-[2px_2px_0px_rgba(255,255,255,1)]">
           Mathis&apos;s Artwork
         </h1>
-        <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+        <ViewModeToggle mode={viewMode} onChange={setChosenViewMode} />
       </div>
 
       <div aria-label="Search artworks" className="relative" role="search">
@@ -193,6 +213,7 @@ export function GalleryClient({
           className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[var(--text-secondary)]"
         />
         <Input
+          aria-label="Search artworks"
           autoComplete="off"
           className="h-12 pl-12 pr-12 text-base"
           enterKeyHint="search"

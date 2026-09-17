@@ -92,6 +92,8 @@ HTTPS enforced by Vercel (308 redirect). Supabase anon key is intentionally publ
 - Squirrel audit reports "meta tags in body" on pages with `generateMetadata` — known Next.js 19 streaming behavior where browser hoists them to `<head>`. Not fixable from app code; browsers handle correctly
 - Squirrel audit "leaked secrets" in minified JS — false positives from minified variable names matching patterns (e.g., `addRef`, `disabl`, `hasInt`)
 - Local `squirrel audit` against `localhost` flags HTTPS/sitemap domain mismatches — only audit production for accurate scores
+- `typescript` is held at `^6.0.3` and `eslint` at `^9.39.5` on purpose. `pnpm lint` breaks past those ceilings: typescript-eslint throws at import on TypeScript ≥7, and `eslint-plugin-react` / `eslint-plugin-import` / `eslint-plugin-jsx-a11y` (pulled in by `eslint-config-next`) still call ESLint ≤9 APIs that ESLint 10 removed. Bump them only once those plugins support the newer majors
+- ESLint uses flat config (`eslint.config.mjs`), not `.eslintrc.json`. `ESLINT_USE_FLAT_CONFIG=false` no longer works
 
 ## Quality Checks
 

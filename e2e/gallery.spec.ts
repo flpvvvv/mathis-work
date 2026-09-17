@@ -42,8 +42,8 @@ test.describe("Public Gallery", () => {
   test("search filters artworks", async ({ page }) => {
     await page.goto("/");
 
-    // Find search input by aria-label
-    const searchInput = page.getByLabel("Search artworks");
+    // Same handle the app's ⌘K shortcut targets
+    const searchInput = page.locator('input[name="search"]');
     await expect(searchInput).toBeVisible();
 
     // Type a search query
