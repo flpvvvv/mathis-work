@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { ImageLightbox } from "@/components/work/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { getPublicImageUrl } from "@/lib/storage/images";
 import type { WorkImage } from "@/lib/types";
@@ -21,6 +22,7 @@ export function WorkGallery({ images, initialImageId, altText }: Props) {
     return index === -1 ? 0 : index;
   }, [images, initialImageId]);
   const [index, setIndex] = useState(initialIndex);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const current = images[index];
   const hasMultiple = images.length > 1;
@@ -36,15 +38,28 @@ export function WorkGallery({ images, initialImageId, altText }: Props) {
   return (
     <div className="space-y-3">
       <div className="relative aspect-[4/3] overflow-hidden rounded-none border border-[var(--border)] bg-black/5 dark:bg-white/5">
-        <Image
-          fill
-          priority
-          alt={altText}
-          className="object-contain"
-          quality={70}
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 70vw, 60vw"
-          src={getPublicImageUrl(current.storage_path)}
-        />
+        <button
+          aria-label={`Open image ${index + 1} of ${images.length} in full screen`}
+          className="absolute inset-0 block cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--primary)]"
+          onClick={() => setLightboxOpen(true)}
+          type="button"
+        >
+          <Image
+            fill
+            priority
+            alt={altText}
+            className="object-contain"
+            quality={70}
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 70vw, 60vw"
+            src={getPublicImageUrl(current.storage_path)}
+          />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute right-2 top-2 inline-flex size-8 items-center justify-center border-2 border-[var(--border)] bg-[var(--background)] text-[var(--text-primary)]"
+          >
+            <Maximize2 className="size-4" />
+          </span>
+        </button>
 
         {hasMultiple ? (
           <>
@@ -99,6 +114,15 @@ export function WorkGallery({ images, initialImageId, altText }: Props) {
           ))}
         </div>
       ) : null}
+
+      <ImageLightbox
+        altText={altText}
+        images={images}
+        index={index}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        onIndexChange={setIndex}
+      />
     </div>
   );
 }

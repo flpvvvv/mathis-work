@@ -39,6 +39,7 @@ This project follows a **Playful Brutalism** aesthetic:
 5. **No separate thumbnails in Supabase** — Next.js `<Image>` generates responsive srcset with WebP/AVIF negotiation
 6. Gallery grid cards: `priority` for first 4 images (above-fold), `loading="lazy"` for rest
 7. Work detail images: `quality={70}` with constrained `sizes` to reduce payload
+8. Work detail images open in a full-screen viewer (`src/components/work/image-lightbox.tsx`) — native `<dialog>` + Pointer Events, no zoom dependency: tap to open, pinch/wheel to zoom, drag to pan, swipe between images, tap again to step out. It renders a previous/current/next track so neighbouring images preload at viewer quality before they are swiped to
 
 ## SEO & Metadata
 

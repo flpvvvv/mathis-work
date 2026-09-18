@@ -270,6 +270,19 @@ All images stored at `object/public` URLs in Supabase Storage. Resizing and form
 - Admin sees: Edit and Delete buttons
 - Back button returns to gallery (preserves scroll position and filters)
 
+#### Full-screen viewer
+
+Tapping/clicking the artwork opens it full screen in a native `<dialog>` (top layer, `::backdrop` black), implemented with Pointer Events — no zoom dependency:
+
+- Opens at fit scale; pinch (touch) or wheel/trackpad (desktop) zooms around the gesture point, drag pans while zoomed
+- Swipe sideways (touch or mouse drag) to move between images; swiping, the arrow buttons and the keyboard all wrap from the last artwork back to the first. A single-image work ignores swipes
+- A three-slot track (previous · current · next) with a circular window keeps the neighbours mounted and their full-resolution variants fetched up front, so a swipe — including the one that wraps around — reveals an already-loaded image. The gallery preview itself stays on the lighter quality-70 variant
+- A tap steps out one level: reset zoom when zoomed, exit when at fit. Esc, the close button, and clicking beside the artwork always exit
+- Chrome: `−` / zoom percentage / `Fit` / `+`, position counter and prev/next arrows for multi-image works
+- Keyboard: arrows switch images, `+` / `-` / `0` zoom, Esc closes
+- Body scroll locked while open; focus returns to the trigger on close
+- The closing tap swallows the browser's compatibility `click` so it cannot reopen the viewer from the preview underneath
+
 ### 6.4 Admin — New Work (`/admin/new`)
 
 Step-by-step flow:

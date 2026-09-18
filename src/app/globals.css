@@ -41,6 +41,7 @@
   --shadow-brutal-active: 2px 2px 0px 0px var(--shadow-color);
 
   --animate-fade-in-up: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-fade-in: fade-in 0.2s ease-out;
 }
 
 :root {
@@ -97,6 +98,15 @@ h6 {
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }
 
