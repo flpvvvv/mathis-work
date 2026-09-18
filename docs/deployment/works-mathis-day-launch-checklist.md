@@ -21,6 +21,8 @@ Set these in Vercel (Project Settings -> Environment Variables):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `DEEPSEEK_API_KEY` (server-only; enables AI corner detection fallback)
+- `DEEPSEEK_MODEL` (optional; defaults to `deepseek-flash`)
 
 ## 5) DNS
 - [x] In DNS provider, add CNAME:

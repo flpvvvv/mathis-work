@@ -49,8 +49,8 @@ function clampNormalized(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-const GEMINI_API_KEY = process.env.GOOGLE_AI_API_KEY;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-flash";
 
 const DETECTION_PROMPT =
   "You are detecting corners for perspective correction of artwork photos.\n\n" +
@@ -68,10 +68,12 @@ const DETECTION_PROMPT =
   "CRITICAL — use NORMALIZED coordinates from 0.0 to 1.0 (NOT pixel coordinates). " +
   "0.0 = left/top edge, 1.0 = right/bottom edge of the full image. " +
   "For example, if the paper is centered and fills 80% of the image, " +
-  "corners would be around 0.1–0.9, never values like 200 or 1080.";
+  "corners would be around 0.1–0.9, never values like 200 or 1080.\n\n" +
+  "Reply with JSON only, no prose, in exactly this shape: " +
+  '{"points":[{"x":0.1,"y":0.05},{"x":0.9,"y":0.05},{"x":0.9,"y":0.95},{"x":0.1,"y":0.95}]}';
 
 export async function POST(request: Request) {
-  if (!GEMINI_API_KEY) {
+  if (!DEEPSEEK_API_KEY) {
     return NextResponse.json(
       { error: "Perspective detection is not configured." },
       { status: 501 },
@@ -100,61 +102,43 @@ export async function POST(request: Request) {
 
   const base64 = buffer.toString("base64");
 
-  const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent` +
-    `?key=${GEMINI_API_KEY}`;
-
   try {
-    const geminiResponse = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { inlineData: { mimeType, data: base64 } },
-              { text: DETECTION_PROMPT },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              points: {
-                type: "ARRAY",
-                minItems: 4,
-                maxItems: 4,
-                items: {
-                  type: "OBJECT",
-                  properties: {
-                    x: {
-                      type: "NUMBER",
-                      description:
-                        "Normalized x coordinate from 0.0 to 1.0. 0.0 is the left edge, 1.0 is the right edge of the image.",
-                    },
-                    y: {
-                      type: "NUMBER",
-                      description:
-                        "Normalized y coordinate from 0.0 to 1.0. 0.0 is the top edge, 1.0 is the bottom edge of the image.",
-                    },
-                  },
-                  required: ["x", "y"],
-                },
-              },
-            },
-            required: ["points"],
-          },
+    const deepseekResponse = await fetch(
+      "https://api.deepseek.com/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
         },
-      }),
-    });
+        body: JSON.stringify({
+          model: DEEPSEEK_MODEL,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: DETECTION_PROMPT },
+                {
+                  type: "image_url",
+                  image_url: { url: `data:${mimeType};base64,${base64}` },
+                },
+              ],
+            },
+          ],
+          // Non-thinking mode: this request is awaited by an interactive UI,
+          // and temperature only takes effect when thinking is disabled.
+          thinking: { type: "disabled" },
+          temperature: 0,
+          max_tokens: 1024,
+          response_format: { type: "json_object" },
+        }),
+      },
+    );
 
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
+    if (!deepseekResponse.ok) {
+      const errorText = await deepseekResponse.text();
       console.error(
-        `Gemini API error (${geminiResponse.status}): ${errorText.slice(0, 200)}`,
+        `DeepSeek API error (${deepseekResponse.status}): ${errorText.slice(0, 200)}`,
       );
       return NextResponse.json(
         { error: "AI detection failed. Adjust corners manually." },
@@ -162,13 +146,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const data = (await geminiResponse.json()) as {
-      candidates?: Array<{
-        content?: { parts?: Array<{ text?: string }> };
-      }>;
+    const data = (await deepseekResponse.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
     };
 
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const rawText = data.choices?.[0]?.message?.content;
     if (!rawText) {
       return NextResponse.json(
         { error: "AI returned no result. Adjust corners manually." },
@@ -193,7 +175,7 @@ export async function POST(request: Request) {
       );
     }
     // Normalize coordinates to 0–1 range.
-    // Gemini sometimes returns pixel coordinates despite the prompt;
+    // The model sometimes returns pixel coordinates despite the prompt;
     // detect this and scale down using actual image dimensions.
     const dims = getImageDimensions(buffer);
 
