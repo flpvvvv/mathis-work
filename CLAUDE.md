@@ -62,7 +62,7 @@ Set in both `next.config.ts` and middleware:
 - `Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()`
 - `X-DNS-Prefetch-Control: on`
 
-HTTPS enforced by Vercel (308 redirect). Supabase anon key is intentionally public — audit tools flag it as "leaked secret" but this is a false positive.
+HTTPS enforced by Vercel (308 redirect). `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_…`) is intentionally public — audit tools flag it as "leaked secret" but this is a false positive. Legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` JWTs are no longer used.
 
 ## Supabase Setup
 

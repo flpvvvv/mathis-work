@@ -8,8 +8,8 @@ let browserClient: ReturnType<typeof createBrowserClient> | undefined;
 
 export function getSupabaseBrowserClient() {
   if (!browserClient) {
-    const { url, anonKey } = getSupabaseEnv();
-    browserClient = createBrowserClient(url, anonKey);
+    const { url, publishableKey } = getSupabaseEnv();
+    browserClient = createBrowserClient(url, publishableKey);
   }
 
   return browserClient;

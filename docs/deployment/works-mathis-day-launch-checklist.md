@@ -20,7 +20,7 @@
 Set these in Vercel (Project Settings -> Environment Variables):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
 ## 5) DNS
 - [x] In DNS provider, add CNAME:

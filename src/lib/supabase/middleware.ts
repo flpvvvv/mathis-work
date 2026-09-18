@@ -4,12 +4,12 @@ import { NextResponse } from "next/server";
 
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !publishableKey) {
     return null;
   }
 
-  return { url, anonKey };
+  return { url, publishableKey };
 }
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -37,7 +37,7 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
-  const supabase = createServerClient(config.url, config.anonKey, {
+  const supabase = createServerClient(config.url, config.publishableKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
