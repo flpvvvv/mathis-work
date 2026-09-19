@@ -4,8 +4,6 @@ import {
   detectCornersFromMask,
   fitLine,
   intersectLines,
-  isValidPaperQuad,
-  orderCorners,
 } from "@/lib/image/detect-paper-corners";
 
 function makeLuminance(width: number, height: number) {
@@ -27,24 +25,6 @@ function fillRect(
   }
 }
 
-describe("orderCorners", () => {
-  it("orders points as TL, TR, BR, BL", () => {
-    const ordered = orderCorners([
-      { x: 180, y: 220 },
-      { x: 20, y: 200 },
-      { x: 30, y: 40 },
-      { x: 170, y: 30 },
-    ]);
-
-    expect(ordered).toEqual([
-      { x: 30, y: 40 },
-      { x: 170, y: 30 },
-      { x: 180, y: 220 },
-      { x: 20, y: 200 },
-    ]);
-  });
-});
-
 describe("fitLine and intersectLines", () => {
   it("intersects horizontal and vertical lines", () => {
     const horizontal = fitLine([
@@ -62,38 +42,6 @@ describe("fitLine and intersectLines", () => {
     expect(vertical).toEqual({ vertical: true, x: 40 });
 
     expect(intersectLines(horizontal!, vertical!)).toEqual({ x: 40, y: 10 });
-  });
-});
-
-describe("isValidPaperQuad", () => {
-  it("accepts a large convex rectangle", () => {
-    expect(
-      isValidPaperQuad(
-        [
-          { x: 20, y: 20 },
-          { x: 180, y: 25 },
-          { x: 175, y: 175 },
-          { x: 25, y: 180 },
-        ],
-        200,
-        200,
-      ),
-    ).toBe(true);
-  });
-
-  it("rejects tiny detections", () => {
-    expect(
-      isValidPaperQuad(
-        [
-          { x: 90, y: 90 },
-          { x: 110, y: 90 },
-          { x: 110, y: 110 },
-          { x: 90, y: 110 },
-        ],
-        200,
-        200,
-      ),
-    ).toBe(false);
   });
 });
 

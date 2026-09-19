@@ -2,6 +2,11 @@
 
 > A public gallery webapp to showcase Mathis's paintings and artwork.
 > Deployed at **works.mathis.day**
+>
+> The image pipeline section (§5) describes the original 2026-02 plan. It has
+> since grown rotation and white balance, and corner detection is now on-device
+> CV rather than a vision-model call — `CLAUDE.md` → "Image Pipeline" is the
+> current description.
 
 ---
 

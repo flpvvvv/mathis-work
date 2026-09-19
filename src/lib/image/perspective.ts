@@ -1,11 +1,16 @@
 import PerspT from "perspective-transform";
 
-import type { JpegResult } from "@/lib/image/jpeg";
-
 export type Point = {
   x: number;
   y: number;
 };
+
+export function scalePoints(points: Point[], scale: number): Point[] {
+  return points.map((point) => ({
+    x: point.x * scale,
+    y: point.y * scale,
+  }));
+}
 
 function distance(a: Point, b: Point) {
   return Math.hypot(a.x - b.x, a.y - b.y);
@@ -124,43 +129,4 @@ export function drawPerspectiveToCanvas(
   }
 
   outputContext.putImageData(destination, 0, 0);
-}
-
-export async function correctPerspectiveToJpeg(
-  image: HTMLImageElement,
-  points: Point[],
-  quality = 0.8,
-): Promise<JpegResult> {
-  const sourceCanvas = document.createElement("canvas");
-  sourceCanvas.width = image.naturalWidth;
-  sourceCanvas.height = image.naturalHeight;
-
-  const sourceContext = sourceCanvas.getContext("2d");
-  if (!sourceContext) {
-    throw new Error("Canvas context is unavailable");
-  }
-  sourceContext.drawImage(image, 0, 0, sourceCanvas.width, sourceCanvas.height);
-
-  const outputCanvas = document.createElement("canvas");
-  drawPerspectiveToCanvas(sourceCanvas, points, outputCanvas);
-
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    outputCanvas.toBlob(
-      (encodedBlob) => {
-        if (!encodedBlob) {
-          reject(new Error("Could not encode corrected image"));
-          return;
-        }
-        resolve(encodedBlob);
-      },
-      "image/jpeg",
-      quality,
-    );
-  });
-
-  return {
-    blob,
-    width: outputCanvas.width,
-    height: outputCanvas.height,
-  };
 }

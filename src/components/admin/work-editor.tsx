@@ -38,7 +38,7 @@ type PendingUpload = {
   id: string;
   file: File;
   state: "pending" | "processing" | "ready" | "error";
-  mode?: "as-is" | "corrected";
+  mode?: "as-is" | "modified";
   result?: {
     blob: Blob;
     width: number;
@@ -47,10 +47,10 @@ type PendingUpload = {
   error?: string;
 };
 
-const PerspectiveCorrector = dynamic(
+const ImageModifier = dynamic(
   () =>
-    import("@/components/admin/perspective-corrector").then(
-      (mod) => mod.PerspectiveCorrector,
+    import("@/components/admin/image-modifier").then(
+      (mod) => mod.ImageModifier,
     ),
   { ssr: false },
 );
@@ -58,7 +58,7 @@ const PerspectiveCorrector = dynamic(
 const THUMBNAIL_SIZES = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw";
 
 type ReadyUpload = PendingUpload & {
-  mode: "as-is" | "corrected";
+  mode: "as-is" | "modified";
   result: NonNullable<PendingUpload["result"]>;
 };
 
@@ -69,7 +69,7 @@ function isReadyUpload(upload: PendingUpload): upload is ReadyUpload {
 function uploadSubtitle(upload: PendingUpload) {
   if (isReadyUpload(upload)) {
     return `${upload.result.width}×${upload.result.height}px • ${
-      upload.mode === "corrected" ? "corrected" : "as-is"
+      upload.mode === "modified" ? "modified" : "as-is"
     }`;
   }
   if (upload.state === "processing") {
@@ -239,7 +239,7 @@ export function WorkEditor({ mode, work, availableTags = [] }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const deleteConfirmRef = useRef<HTMLButtonElement>(null);
-  const [correctingUploadId, setCorrectingUploadId] = useState<string | null>(null);
+  const [modifyingUploadId, setModifyingUploadId] = useState<string | null>(null);
 
   useEffect(() => {
     if (confirmDelete) {
@@ -251,7 +251,7 @@ export function WorkEditor({ mode, work, availableTags = [] }: Props) {
     () => (mode === "create" ? "Save New Work" : "Update Work"),
     [mode],
   );
-  const activeCorrection = uploads.find((upload) => upload.id === correctingUploadId);
+  const activeUpload = uploads.find((upload) => upload.id === modifyingUploadId);
   const readyUploads = uploads.filter(isReadyUpload);
   const unresolvedUploads = uploads.filter(
     (upload) =>
@@ -570,9 +570,9 @@ export function WorkEditor({ mode, work, availableTags = [] }: Props) {
                                 size="sm"
                                 type="button"
                                 variant="outline"
-                                onClick={() => setCorrectingUploadId(upload.id)}
+                                onClick={() => setModifyingUploadId(upload.id)}
                               >
-                                Correct Perspective
+                                Modify
                               </Button>
                             </>
                           ) : null}
@@ -706,35 +706,35 @@ export function WorkEditor({ mode, work, availableTags = [] }: Props) {
         ) : null}
       </form>
 
-      {activeCorrection ? (
-        <div className="mt-4">
-          <PerspectiveCorrector
-            file={activeCorrection.file}
-            onApply={(result) => {
-              setUploads((current) =>
-                current.map((upload) =>
-                  upload.id === activeCorrection.id
-                    ? {
-                        ...upload,
-                        state: "ready",
-                        mode: "corrected",
-                        result,
-                        error: undefined,
-                      }
-                    : upload,
-                ),
-              );
-              if (!coverImageId) {
-                setCoverImageId(activeCorrection.id);
-              }
-              setCorrectingUploadId(null);
-            }}
-            onCancel={() => {
-              setCorrectingUploadId(null);
-              void processAsIs(activeCorrection.id);
-            }}
-          />
-        </div>
+      {activeUpload ? (
+        <ImageModifier
+          key={activeUpload.id}
+          file={activeUpload.file}
+          onApply={(result) => {
+            setUploads((current) =>
+              current.map((upload) =>
+                upload.id === activeUpload.id
+                  ? {
+                      ...upload,
+                      state: "ready",
+                      mode: "modified",
+                      result,
+                      error: undefined,
+                    }
+                  : upload,
+              ),
+            );
+            if (!coverImageId) {
+              setCoverImageId(activeUpload.id);
+            }
+            setModifyingUploadId(null);
+          }}
+          onUseAsIs={() => {
+            setModifyingUploadId(null);
+            void processAsIs(activeUpload.id);
+          }}
+          onClose={() => setModifyingUploadId(null)}
+        />
       ) : null}
     </Card>
   );

@@ -1,8 +1,17 @@
+import {
+  detectQuadFromEdges,
+  gradientScale,
+  scoreQuad,
+  sobelMagnitude,
+} from "@/lib/image/detect-paper-edges";
 import type { Point } from "@/lib/image/perspective";
+import { isValidPaperQuad, orderCorners } from "@/lib/image/quad";
 
 const MAX_ANALYSIS_DIM = 900;
 const CORNER_PATCH_RATIO = 0.1;
 const CENTER_PATCH_RATIO = 0.35;
+/** Percentile used to normalise edge strength when scoring candidates. */
+const EDGE_PERCENTILE = 0.92;
 
 type Line =
   | { vertical: true; x: number }
@@ -44,6 +53,10 @@ function colorDistance(
   target: readonly [number, number, number],
 ) {
   return Math.hypot(r - target[0], g - target[1], b - target[2]);
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function createAnalysisImage(image: HTMLImageElement): AnalysisImage | null {
@@ -108,9 +121,7 @@ function samplePatch(
   return { rgb: medianRgb(rgbSamples), lum: median(lumSamples) };
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
+// --- Bright-sheet mask strategy ---
 
 function buildPaperMask(
   analysis: AnalysisImage,
@@ -335,31 +346,42 @@ function gradientMagnitude(
   return Math.hypot(right - left, down - up);
 }
 
+/**
+ * Snaps a corner to the strongest nearby gradient. With a `mask`, the search is
+ * restricted to mask boundary pixels; without one it also follows the outlines
+ * found by the edge strategy.
+ */
 function refineCorner(
   lum: Float32Array,
-  mask: boolean[],
   width: number,
   height: number,
   corner: Point,
+  mask?: boolean[],
 ) {
+  const start = {
+    x: clamp(corner.x, 1, width - 2),
+    y: clamp(corner.y, 1, height - 2),
+  };
   const radius = Math.max(3, Math.round(Math.min(width, height) * 0.035));
-  let best = corner;
+  let best = start;
   let bestScore = -1;
 
   for (let dy = -radius; dy <= radius; dy += 1) {
     for (let dx = -radius; dx <= radius; dx += 1) {
-      const x = Math.round(corner.x + dx);
-      const y = Math.round(corner.y + dy);
+      const x = Math.round(start.x + dx);
+      const y = Math.round(start.y + dy);
       if (x <= 0 || y <= 0 || x >= width - 1 || y >= height - 1) continue;
 
-      const index = y * width + x;
-      const onBoundary =
-        mask[index] &&
-        (!mask[index - 1] ||
-          !mask[index + 1] ||
-          !mask[index - width] ||
-          !mask[index + width]);
-      if (!onBoundary) continue;
+      if (mask) {
+        const index = y * width + x;
+        const onBoundary =
+          mask[index] &&
+          (!mask[index - 1] ||
+            !mask[index + 1] ||
+            !mask[index - width] ||
+            !mask[index + width]);
+        if (!onBoundary) continue;
+      }
 
       const score = gradientMagnitude(lum, width, height, x, y);
       if (score > bestScore) {
@@ -370,73 +392,6 @@ function refineCorner(
   }
 
   return best;
-}
-
-export function orderCorners(points: Point[]): Point[] {
-  const sortedByY = [...points].sort((a, b) => a.y - b.y || a.x - b.x);
-  const top = sortedByY.slice(0, 2).sort((a, b) => a.x - b.x);
-  const bottom = sortedByY.slice(2, 4).sort((a, b) => a.x - b.x);
-  return [top[0], top[1], bottom[1], bottom[0]];
-}
-
-function polygonArea(points: Point[]) {
-  let area = 0;
-  for (let i = 0; i < points.length; i += 1) {
-    const next = points[(i + 1) % points.length];
-    area += points[i].x * next.y - next.x * points[i].y;
-  }
-  return Math.abs(area) / 2;
-}
-
-export function isValidPaperQuad(points: Point[], width: number, height: number) {
-  if (points.length !== 4) return false;
-
-  const ordered = orderCorners(points);
-  const imageArea = width * height;
-  const area = polygonArea(ordered);
-  if (area < imageArea * 0.12 || area > imageArea * 0.985) return false;
-
-  const margin = Math.min(width, height) * 0.01;
-  for (const point of ordered) {
-    if (
-      point.x < -margin ||
-      point.y < -margin ||
-      point.x > width + margin ||
-      point.y > height + margin
-    ) {
-      return false;
-    }
-  }
-
-  const [tl, tr, br, bl] = ordered;
-  if (!(tl.x < tr.x && bl.x < br.x && tl.y < bl.y && tr.y < br.y)) {
-    return false;
-  }
-
-  const topWidth = tr.x - tl.x;
-  const bottomWidth = br.x - bl.x;
-  const leftHeight = bl.y - tl.y;
-  const rightHeight = br.y - tr.y;
-  if (topWidth < width * 0.2 || bottomWidth < width * 0.2) return false;
-  if (leftHeight < height * 0.2 || rightHeight < height * 0.2) return false;
-
-  let sign = 0;
-  for (let i = 0; i < 4; i += 1) {
-    const current = ordered[i];
-    const next = ordered[(i + 1) % 4];
-    const following = ordered[(i + 2) % 4];
-    const cross =
-      (next.x - current.x) * (following.y - next.y) -
-      (next.y - current.y) * (following.x - next.x);
-    if (Math.abs(cross) < 1) continue;
-    if (sign === 0) {
-      sign = Math.sign(cross);
-    } else if (Math.sign(cross) !== sign) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 export function detectCornersFromMask(
@@ -479,106 +434,22 @@ export function detectCornersFromMask(
   if (!tl || !tr || !br || !bl) return null;
 
   const corners = orderCorners([
-    refineCorner(luminanceValues, mask, width, height, tl),
-    refineCorner(luminanceValues, mask, width, height, tr),
-    refineCorner(luminanceValues, mask, width, height, br),
-    refineCorner(luminanceValues, mask, width, height, bl),
+    refineCorner(luminanceValues, width, height, tl, mask),
+    refineCorner(luminanceValues, width, height, tr, mask),
+    refineCorner(luminanceValues, width, height, br, mask),
+    refineCorner(luminanceValues, width, height, bl, mask),
   ]);
 
   return isValidPaperQuad(corners, width, height) ? corners : null;
 }
 
-export function refineCornersOnImage(
-  image: HTMLImageElement,
-  points: Point[],
-): Point[] | null {
-  const analysis = createAnalysisImage(image);
-  if (!analysis) return null;
-
-  const scaled = points.map((point) => ({
-    x: point.x * analysis.scale,
-    y: point.y * analysis.scale,
-  }));
-
-  const ordered = orderCorners(scaled);
-  const refined = ordered.map((corner) => {
-    const radius = Math.max(4, Math.round(Math.min(analysis.width, analysis.height) * 0.05));
-    let best = corner;
-    let bestScore = -1;
-
-    for (let dy = -radius; dy <= radius; dy += 1) {
-      for (let dx = -radius; dx <= radius; dx += 1) {
-        const x = Math.round(corner.x + dx);
-        const y = Math.round(corner.y + dy);
-        if (x <= 0 || y <= 0 || x >= analysis.width - 1 || y >= analysis.height - 1) {
-          continue;
-        }
-
-        const score = gradientMagnitude(
-          analysis.luminance,
-          analysis.width,
-          analysis.height,
-          x,
-          y,
-        );
-        if (score > bestScore) {
-          bestScore = score;
-          best = { x, y };
-        }
-      }
-    }
-
-    return best;
-  });
-
-  const natural = refined.map((point) => ({
-    x: point.x / analysis.scale,
-    y: point.y / analysis.scale,
-  }));
-
-  return isValidPaperQuad(
-    refined,
-    analysis.width,
-    analysis.height,
-  )
-    ? natural
-    : null;
-}
-
-export function detectPaperCorners(image: HTMLImageElement): Point[] | null {
-  const analysis = createAnalysisImage(image);
-  if (!analysis) return null;
-
+function paperQuadFromMask(analysis: AnalysisImage): Point[] | null {
   const { width, height, luminance: lum, rgba } = analysis;
   const corners = [
     samplePatch(rgba, lum, width, height, width * 0.08, height * 0.08, CORNER_PATCH_RATIO),
-    samplePatch(
-      rgba,
-      lum,
-      width,
-      height,
-      width * 0.92,
-      height * 0.08,
-      CORNER_PATCH_RATIO,
-    ),
-    samplePatch(
-      rgba,
-      lum,
-      width,
-      height,
-      width * 0.08,
-      height * 0.92,
-      CORNER_PATCH_RATIO,
-    ),
-    samplePatch(
-      rgba,
-      lum,
-      width,
-      height,
-      width * 0.92,
-      height * 0.92,
-      CORNER_PATCH_RATIO,
-    ),
+    samplePatch(rgba, lum, width, height, width * 0.92, height * 0.08, CORNER_PATCH_RATIO),
+    samplePatch(rgba, lum, width, height, width * 0.08, height * 0.92, CORNER_PATCH_RATIO),
+    samplePatch(rgba, lum, width, height, width * 0.92, height * 0.92, CORNER_PATCH_RATIO),
   ];
   const center = samplePatch(
     rgba,
@@ -599,12 +470,51 @@ export function detectPaperCorners(image: HTMLImageElement): Point[] | null {
   mask = erodeMask(mask, width, height);
   mask = keepLargestComponent(mask, width, height);
 
-  const detected = detectCornersFromMask(mask, width, height, lum);
-  if (!detected) return null;
+  return detectCornersFromMask(mask, width, height, lum);
+}
 
-  const scale = 1 / analysis.scale;
-  return detected.map((point) => ({
-    x: point.x * scale,
-    y: point.y * scale,
+/**
+ * Finds the four corners of the sheet of paper in a photo, in natural image
+ * coordinates, ordered top-left, top-right, bottom-right, bottom-left.
+ *
+ * Two independent strategies run — the gradient-image outlines, and the
+ * bright-sheet mask — and the better-scoring quad wins, so photos with uneven
+ * lighting (which defeat a global brightness threshold) still resolve. Returns
+ * null when nothing convincing is found, leaving the corners to the user.
+ */
+export function detectPaperCorners(image: HTMLImageElement): Point[] | null {
+  const analysis = createAnalysisImage(image);
+  if (!analysis) return null;
+
+  const { width, height, luminance: lum, scale } = analysis;
+  const magnitude = sobelMagnitude(lum, width, height);
+  const edgeScale = gradientScale(magnitude, EDGE_PERCENTILE);
+
+  const candidates = [
+    detectQuadFromEdges(lum, magnitude, width, height),
+    paperQuadFromMask(analysis),
+  ].filter((quad): quad is Point[] => quad !== null);
+
+  let best: Point[] | null = null;
+  let bestScore = -1;
+  for (const quad of candidates) {
+    const score =
+      edgeScale > 0
+        ? scoreQuad(quad, lum, magnitude, edgeScale, width, height)
+        : 0;
+    if (score > bestScore) {
+      bestScore = score;
+      best = quad;
+    }
+  }
+
+  if (!best) return null;
+
+  const refined = best.map((corner) => refineCorner(lum, width, height, corner));
+  if (!isValidPaperQuad(refined, width, height)) return null;
+
+  return refined.map((point) => ({
+    x: clamp(point.x / scale, 0, image.naturalWidth),
+    y: clamp(point.y / scale, 0, image.naturalHeight),
   }));
 }

@@ -8,35 +8,41 @@ export async function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
   const objectUrl = URL.createObjectURL(blob);
 
   try {
-    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error("Could not load image"));
-      img.src = objectUrl;
-    });
-    return image;
+    const { promise, resolve, reject } =
+      Promise.withResolvers<HTMLImageElement>();
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not load image"));
+    image.src = objectUrl;
+    return await promise;
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
 }
 
-function canvasToBlob(
+async function canvasToBlob(
   canvas: HTMLCanvasElement,
   quality: number,
 ): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          reject(new Error("Could not encode image"));
-          return;
-        }
-        resolve(blob);
-      },
-      "image/jpeg",
-      quality,
-    );
-  });
+  const { promise, resolve } = Promise.withResolvers<Blob | null>();
+  canvas.toBlob(resolve, "image/jpeg", quality);
+
+  const blob = await promise;
+  if (!blob) {
+    throw new Error("Could not encode image");
+  }
+  return blob;
+}
+
+export async function canvasToJpeg(
+  canvas: HTMLCanvasElement,
+  quality = 0.8,
+): Promise<JpegResult> {
+  return {
+    blob: await canvasToBlob(canvas, quality),
+    width: canvas.width,
+    height: canvas.height,
+  };
 }
 
 export async function reencodeToJpeg(
@@ -54,11 +60,5 @@ export async function reencodeToJpeg(
   }
 
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  const blob = await canvasToBlob(canvas, quality);
-
-  return {
-    blob,
-    width: canvas.width,
-    height: canvas.height,
-  };
+  return canvasToJpeg(canvas, quality);
 }

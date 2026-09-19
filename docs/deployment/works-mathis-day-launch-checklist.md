@@ -21,8 +21,6 @@ Set these in Vercel (Project Settings -> Environment Variables):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `DEEPSEEK_API_KEY` (server-only; enables AI corner detection fallback)
-- `DEEPSEEK_MODEL` (optional; defaults to `deepseek-flash`)
 
 ## 5) DNS
 - [x] In DNS provider, add CNAME:
@@ -43,7 +41,7 @@ Set these in Vercel (Project Settings -> Environment Variables):
 - [ ] Work detail opens and back navigation preserves gallery state
 - [ ] Login sends magic link
 - [ ] Admin can create work with image upload
-- [ ] Perspective correction flow works on mobile + desktop
+- [ ] Modify flow (rotate, perspective, white balance) works on mobile + desktop
 - [ ] Admin can edit and delete work
 
 ## 8) Design & Brand Verification

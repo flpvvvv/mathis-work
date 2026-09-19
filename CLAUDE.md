@@ -32,14 +32,16 @@ This project follows a **Playful Brutalism** aesthetic:
 
 ## Image Pipeline
 
-1. User selects image → rendered on canvas with 4 draggable corner handles
-2. `perspective-transform` computes homography matrix to warp selection into flat rectangle
-3. Output extracted as 80% JPEG and uploaded to Supabase Storage bucket `artworks`
-4. Storage path: `{work_id}/{image_id}.jpg`
-5. **No separate thumbnails in Supabase** — Next.js `<Image>` generates responsive srcset with WebP/AVIF negotiation
-6. Gallery grid cards: `priority` for first 4 images (above-fold), `loading="lazy"` for rest
-7. Work detail images: `quality={70}` with constrained `sizes` to reduce payload
-8. Work detail images open in a full-screen viewer (`src/components/work/image-lightbox.tsx`) — native `<dialog>` + Pointer Events, no zoom dependency: tap to open, pinch/wheel to zoom, drag to pan, swipe between images, tap again to step out. It renders a previous/current/next track so neighbouring images preload at viewer quality before they are swiped to
+1. User selects an image → the pending upload card offers "Modify" (or "Use As-Is"). "Modify" opens `src/components/admin/image-modifier.tsx` — a full-screen `<dialog>` (native, like the lightbox) so it is visible immediately on mobile, where an inline panel below the fold looked like nothing had happened
+2. Inside the dialog: quarter-turn rotation (left/right), 4 draggable corner handles on the source photo, live preview, and white balance. Everything is composed client-side: rotate → `perspective-transform` homography warp into a flat rectangle (`src/lib/image/perspective.ts`, `src/lib/image/rotate.ts`) → white balance (`src/lib/image/white-balance.ts`) applied in linear light with a highlight roll-off
+3. Corner auto-detection is on-device CV, no network call (`src/lib/image/detect-paper-corners.ts`): Sobel gradient → thresholded edge components → convex hull → Douglas–Peucker simplification raised until exactly 4 vertices remain → quad scored on area, edge support and paper-vs-background brightness; the bright-sheet mask strategy runs too and the higher-scoring quad wins, then corners snap to the strongest nearby gradient
+4. White balance: "Pick white" samples the median colour of a patch the user taps on the paper; `gainsFromSample` neutralises that colour (luminance preserving) with strength/brightness sliders
+5. Output extracted as 80% JPEG and uploaded to Supabase Storage bucket `artworks`
+6. Storage path: `{work_id}/{image_id}.jpg`
+7. **No separate thumbnails in Supabase** — Next.js `<Image>` generates responsive srcset with WebP/AVIF negotiation
+8. Gallery grid cards: `priority` for first 4 images (above-fold), `loading="lazy"` for rest
+9. Work detail images: `quality={70}` with constrained `sizes` to reduce payload
+10. Work detail images open in a full-screen viewer (`src/components/work/image-lightbox.tsx`) — native `<dialog>` + Pointer Events, no zoom dependency: tap to open, pinch/wheel to zoom, drag to pan, swipe between images, tap again to step out. It renders a previous/current/next track so neighbouring images preload at viewer quality before they are swiped to
 
 ## SEO & Metadata
 
