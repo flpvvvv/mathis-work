@@ -67,7 +67,8 @@ HTTPS enforced by Vercel (308 redirect). `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 
 
 ## Supabase Setup
 
-- Storage bucket `artworks` must exist (public read, admin write via RLS)
+- Storage bucket `artworks` must exist and be **public**. Public URLs bypass RLS entirely (for public buckets Storage queries as superuser), so reads need no policy on `storage.objects`
+- `storage.objects` RLS for `artworks`: SELECT/INSERT/UPDATE/DELETE, all restricted to `public.is_admin(auth.uid())`. SELECT is **not optional** — Storage authorises writes with statements that read rows back (`INSERT … ON CONFLICT DO UPDATE … RETURNING *` for `upsert: true` uploads, `DELETE … RETURNING *` for `remove()`), and Postgres requires SELECT policies for those. Dropping it (as the Supabase storage advisor suggests) breaks admin uploads and deletes. See `supabase/migrations/20260919000100_storage_artworks_admin_read.sql`
 - RLS policies: public SELECT on `works`, `images`, `tags`, `work_tags`; admin INSERT/UPDATE/DELETE on all tables
 - `profiles` table auto-created via trigger on auth signup; `is_admin` set manually in Dashboard
 - Full-text search index on `works.description` using `tsvector` column `description_tsv`
@@ -88,7 +89,8 @@ HTTPS enforced by Vercel (308 redirect). `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 
 ## Known Issues / Gotchas
 
 - If gallery shows nothing after upload, check that `animate-fade-in-up` is registered in `@theme` (not just standalone CSS)
-- If images don't appear in Storage after upload, verify: (1) `artworks` bucket exists, (2) RLS allows admin uploads, (3) user is authenticated
+- If images don't appear in Storage after upload, verify: (1) `artworks` bucket exists, (2) RLS allows admin uploads, (3) user is authenticated, (4) an admin SELECT policy exists on `storage.objects` — uploads/deletes are authorised with statements that also need SELECT policies
+- Admin "Failed to upload image. Please try again." or files left behind after deleting images/works: the `storage.objects` SELECT policy for admins is missing. `remove()` errors in `src/lib/server/admin-works.ts` are not surfaced, so deletes fail silently and only the DB rows disappear
 - `getPublicImageUrl` constructs URLs as `{SUPABASE_URL}/storage/v1/object/public/artworks/{storage_path}`
 - Squirrel audit reports "meta tags in body" on pages with `generateMetadata` — known Next.js 19 streaming behavior where browser hoists them to `<head>`. Not fixable from app code; browsers handle correctly
 - Squirrel audit "leaked secrets" in minified JS — false positives from minified variable names matching patterns (e.g., `addRef`, `disabl`, `hasInt`)
