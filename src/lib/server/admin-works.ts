@@ -1,5 +1,6 @@
 import { BUCKET_NAME } from "@/lib/storage/images";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import type { SupabaseServerClient } from "@/lib/supabase/server";
 import type { SaveWorkPayload } from "@/lib/admin/work-payload";
 import { normalizeTags } from "@/lib/admin/work-utils";
 
@@ -17,7 +18,7 @@ type AdminSuccess<T> = {
 type AdminResult<T> = AdminSuccess<T> | AdminFailure;
 
 type AdminContext = {
-  supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>;
+  supabase: SupabaseServerClient;
   userId: string;
 };
 
@@ -269,13 +270,37 @@ export async function updateWork(
     .map((image) => image.id)
     .filter((id) => !incomingIds.has(id));
   if (deleteIds.length > 0) {
-    await supabase.from("images").delete().in("id", deleteIds);
-
     const removedStoragePaths = (existingImages ?? [])
       .filter((image) => deleteIds.includes(image.id))
       .map((image) => normalizeStoragePath(image.storage_path));
+
+    // Files first: the rows are the only record of these paths, so a failed removal after
+    // the delete would leak the files with nothing left to retry from.
     if (removedStoragePaths.length > 0) {
-      await supabase.storage.from(BUCKET_NAME).remove(removedStoragePaths);
+      const { error: removeError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .remove(removedStoragePaths);
+
+      if (removeError) {
+        return {
+          ok: false,
+          status: 500,
+          message: "Could not save the work. Please check your connection and try again.",
+        };
+      }
+    }
+
+    const { error: deleteError } = await supabase
+      .from("images")
+      .delete()
+      .in("id", deleteIds);
+
+    if (deleteError) {
+      return {
+        ok: false,
+        status: 500,
+        message: "Could not save the work. Please check your connection and try again.",
+      };
     }
   }
 
@@ -306,6 +331,26 @@ export async function deleteWork(
 
   const tagIds = (workTags ?? []).map((row) => row.tag_id);
 
+  const storagePaths = (existingImages ?? []).map((row) =>
+    normalizeStoragePath(row.storage_path),
+  );
+
+  // Files first: the rows are the only record of these paths, so a failed removal after
+  // the delete would leak the files with nothing left to retry from.
+  if (storagePaths.length > 0) {
+    const { error: removeError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .remove(storagePaths);
+
+    if (removeError) {
+      return {
+        ok: false,
+        status: 500,
+        message: "Could not delete the work. Please check your connection and try again.",
+      };
+    }
+  }
+
   const { error } = await supabase.from("works").delete().eq("id", workId);
   if (error) {
     return {
@@ -313,13 +358,6 @@ export async function deleteWork(
       status: 500,
       message: "Could not delete the work. Please check your connection and try again.",
     };
-  }
-
-  const storagePaths = (existingImages ?? []).map((row) =>
-    normalizeStoragePath(row.storage_path),
-  );
-  if (storagePaths.length > 0) {
-    await supabase.storage.from(BUCKET_NAME).remove(storagePaths);
   }
 
   // Clean up any orphaned tags

@@ -90,7 +90,7 @@ HTTPS enforced by Vercel (308 redirect). `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 
 
 - If gallery shows nothing after upload, check that `animate-fade-in-up` is registered in `@theme` (not just standalone CSS)
 - If images don't appear in Storage after upload, verify: (1) `artworks` bucket exists, (2) RLS allows admin uploads, (3) user is authenticated, (4) an admin SELECT policy exists on `storage.objects` — uploads/deletes are authorised with statements that also need SELECT policies
-- Admin "Failed to upload image. Please try again." or files left behind after deleting images/works: the `storage.objects` SELECT policy for admins is missing. `remove()` errors in `src/lib/server/admin-works.ts` are not surfaced, so deletes fail silently and only the DB rows disappear
+- Admin "Failed to upload image. Please try again." or "Could not save/delete the work": the admin SELECT policy on `storage.objects` is missing. `updateWork`/`deleteWork` in `src/lib/server/admin-works.ts` remove storage files *before* their DB rows and fail the request when Storage errors, so the failure surfaces instead of leaking files (regression tests: `src/lib/server/admin-works.test.ts`)
 - `getPublicImageUrl` constructs URLs as `{SUPABASE_URL}/storage/v1/object/public/artworks/{storage_path}`
 - Squirrel audit reports "meta tags in body" on pages with `generateMetadata` — known Next.js 19 streaming behavior where browser hoists them to `<head>`. Not fixable from app code; browsers handle correctly
 - Squirrel audit "leaked secrets" in minified JS — false positives from minified variable names matching patterns (e.g., `addRef`, `disabl`, `hasInt`)
