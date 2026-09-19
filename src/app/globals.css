@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* next-themes switches the theme by putting `dark` on <html>, and the
+   palette below is switched by that class. Without this the dark: variant
+   follows prefers-color-scheme instead, so an explicit light choice on a
+   dark system kept dark: utilities while the variables went light.
+   :where() keeps the variant's specificity at zero, as the built-in one. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Outfit", system-ui, sans-serif;
   --font-display: "Caprasimo", "Outfit", system-ui, sans-serif;
