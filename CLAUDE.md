@@ -10,16 +10,17 @@ Public gallery webapp for Mathis's artwork at **works.mathis.day**. A neo-brutal
 
 ## Architecture
 
-- Public gallery at `/` with Grid and Timeline views, infinite scroll, full-text search, tag and date filters
+- Public gallery at `/` with Grid, Timeline and Analytics views, infinite scroll, full-text search, tag and date filters
 - Work detail at `/works/[id]` with image carousel
 - Admin CRUD behind `/admin/*` (protected via middleware + Supabase Magic Link auth)
 - Client-side perspective correction for uploaded photos (Canvas API + `perspective-transform`)
+- Analytics view (`src/components/gallery/analytics-view.tsx`) reads `GET /api/stats`, backed by `getGalleryStats` in `src/lib/data/stats.ts`: one fetch of every work matching the active filters, aggregated in the pure, unit-tested `aggregateWorks`. It is one document with two emphases — poster below 1024px, season wall at 1024px and up — and never paginates, so the infinite feed is disabled while it is open
 
 ## Neo-Brutalist Design Constraints
 
 This project follows a **Playful Brutalism** aesthetic:
 
-- **Typography**: Caprasimo for headings (chunky, playful), Outfit for body text (clean, geometric). Avoid generic fonts like Inter, Roboto.
+- **Typography**: Caprasimo for headings (chunky, playful), Outfit for body text (clean, geometric), DM Mono for small uppercase data labels (counts, axes, kickers). Avoid generic fonts like Inter, Roboto.
 - **Colors**:
   - Light mode: Warm paper cream (`#FFF8F0`) background
   - Dark mode: Charcoal (`#1A1A2E`) background
@@ -98,6 +99,7 @@ HTTPS enforced by Vercel (308 redirect). `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 
 - Squirrel audit "leaked secrets" in minified JS — false positives from minified variable names matching patterns (e.g., `addRef`, `disabl`, `hasInt`)
 - Local `squirrel audit` against `localhost` flags HTTPS/sitemap domain mismatches — only audit production for accurate scores
 - `typescript` is held at `^6.0.3` and `eslint` at `^9.39.5` on purpose. `pnpm lint` breaks past those ceilings: typescript-eslint throws at import on TypeScript ≥7, and `eslint-plugin-react` / `eslint-plugin-import` / `eslint-plugin-jsx-a11y` (pulled in by `eslint-config-next`) still call ESLint ≤9 APIs that ESLint 10 removed. Bump them only once those plugins support the newer majors
+- `GalleryClient` seeds `filters` from `initialFilters` with `useState`, so it does **not** adopt new `searchParams` on a soft navigation to `/` — a `next/link` to `/?from=…` would change the URL but keep the old filters. Analytics deep links therefore use plain `<a>` (full document load). Any future in-app link that targets `/` with different filters must either do the same or move the filter state into the URL
 - ESLint uses flat config (`eslint.config.mjs`), not `.eslintrc.json`. `ESLINT_USE_FLAT_CONFIG=false` no longer works
 
 ## Quality Checks
@@ -106,3 +108,13 @@ HTTPS enforced by Vercel (308 redirect). `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 
 - Lint: `pnpm lint`
 - Unit/Integration tests: `pnpm test`
 - E2E smoke: `pnpm test:e2e`
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

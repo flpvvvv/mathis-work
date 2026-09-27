@@ -10,6 +10,7 @@
 @theme {
   --font-sans: "Outfit", system-ui, sans-serif;
   --font-display: "Caprasimo", "Outfit", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-border: var(--border);
   --color-input: var(--border);
@@ -49,6 +50,8 @@
 
   --animate-fade-in-up: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-marquee: marquee 26s linear infinite;
 }
 
 :root {
@@ -115,6 +118,45 @@ h6 {
   100% {
     opacity: 1;
   }
+}
+
+/* Analytics view: tag blobs drift, the summary ticker scrolls. */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(1.5deg);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Analytics view: hatched bars mark isolated months, the dotted field
+   backs the tag constellation. */
+.hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 5px,
+    var(--muted) 5px 10px
+  );
+}
+
+.dot-grid {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--muted) 1px,
+    transparent 0
+  );
+  background-size: 14px 14px;
 }
 
 .container-page {

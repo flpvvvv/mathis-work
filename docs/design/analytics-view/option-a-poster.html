@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Option A — Poster · Analytics view · Mathis Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ------------------------------------------------------------------
+     Option A — POSTER
+     Few numbers, shouted. One dominant chart, one film strip, a ticker.
+     Everything sits on a single screen at >=1100px.
+     Data is the real production gallery state (2026-09-27).
+     ------------------------------------------------------------------ */
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --background:#FFF8F0; --surface:#FFFFFF;
+    --primary:#FF6B6B; --secondary:#4ECDC4; --accent:#FFE66D;
+    --text-primary:#000; --text-secondary:#333;
+    --border:#000; --shadow-color:#000; --muted:#E2E8F0;
+    --shadow-brutal:8px 8px 0 0 var(--shadow-color);
+    --shadow-brutal-sm:4px 4px 0 0 var(--shadow-color);
+    --shadow-brutal-lg:12px 12px 0 0 var(--shadow-color);
+  }
+  html[data-theme="dark"]{
+    --background:#1A1A2E; --surface:#242440;
+    --text-primary:#F5F0EB; --text-secondary:#B8AFA6;
+    --border:#fff; --shadow-color:#fff;
+  }
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--background); color:var(--text-primary);
+    font-family:"Outfit","PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:"Caprasimo","PingFang SC",system-ui,sans-serif;font-weight:400}
+  .mono{font-family:"DM Mono",ui-monospace,SFMono-Regular,monospace}
+  button{font:inherit;color:inherit}
+  :focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--border)}
+  .container{max-width:1280px;margin:0 auto;padding-inline:1rem}
+  @media (min-width:768px){.container{padding-inline:1.5rem}}
+
+  /* ---------- chrome (identical across the three proposals) ---------- */
+  .site-header{position:sticky;top:0;z-index:50;background:var(--background);border-bottom:4px solid var(--border)}
+  .header-inner{display:flex;height:64px;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;font-family:Caprasimo;font-size:1.5rem;text-transform:uppercase;letter-spacing:.06em}
+  .brand .mark{width:32px;height:32px;flex:none;box-shadow:var(--shadow-brutal-sm)}
+  .header-actions{display:flex;align-items:center;gap:8px}
+  .btn{border:2px solid var(--border);background:var(--surface);padding:8px 16px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-brutal-sm);transition:transform .12s ease,box-shadow .12s ease;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 0 var(--shadow-color)}
+  .btn:active{transform:translate(2px,2px);box-shadow:var(--shadow-brutal-active,2px 2px 0 0 var(--shadow-color))}
+  .icon-btn{width:40px;height:40px;display:grid;place-items:center;border:2px solid var(--border);background:var(--surface);cursor:pointer;box-shadow:var(--shadow-brutal-sm)}
+  .icon-btn:hover{background:var(--accent);color:#000}
+
+  main{padding-bottom:80px}
+  .page-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:32px 0 16px}
+  h1{font-size:clamp(2rem,6vw,3rem);line-height:1;margin:0;text-transform:uppercase;letter-spacing:-.02em;text-shadow:2px 2px 0 var(--shadow-color)}
+  .segmented{display:inline-flex;border:2px solid var(--border);background:var(--surface);padding:4px}
+  .seg{border:0;background:transparent;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .seg:hover{background:var(--accent);color:#000}
+  .seg[aria-selected="true"]{background:var(--primary);color:#000}
+
+  .search{position:relative}
+  .search input{width:100%;height:48px;border:2px solid var(--border);background:var(--surface);color:inherit;padding:0 48px;font-size:1rem;box-shadow:var(--shadow-brutal-sm)}
+  .search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none}
+  .tagbar{display:flex;align-items:center;gap:8px;margin:12px 0 0;overflow-x:auto;padding-bottom:4px}
+  .tagbar .chip{flex:none;border:2px solid var(--border);background:var(--surface);padding:4px 12px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;font-family:Caprasimo}
+  .tagbar .chip:hover{background:var(--accent);color:#000}
+  .tagbar .spacer{flex:1}
+  .scope{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:20px 0 0;font-size:.8rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .scope b{color:var(--text-primary)}
+
+  /* ---------- prototype badge ---------- */
+  .proto{position:fixed;right:16px;bottom:16px;z-index:80;border:2px solid var(--border);background:var(--accent);color:#000;padding:6px 10px;font-family:"DM Mono",monospace;font-size:.7rem;font-weight:500;letter-spacing:.04em;box-shadow:var(--shadow-brutal-sm)}
+
+  /* ---------- poster hero ---------- */
+  .poster{display:grid;gap:24px;grid-template-columns:1fr;margin-top:28px;align-items:start}
+  @media (min-width:1000px){.poster{grid-template-columns:repeat(12,minmax(0,1fr))}}
+  .hero{display:grid;gap:24px;grid-template-columns:1fr;grid-column:span 12}
+  @media (min-width:760px){.hero{grid-template-columns:1.45fr 1fr .85fr}}
+  .tile{border:3px solid var(--border);background:var(--surface);box-shadow:var(--shadow-brutal);padding:22px}
+  .tile .kicker{font-family:"DM Mono",monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin:0 0 6px}
+  .tile .figure{font-family:Caprasimo;font-size:clamp(4rem,11vw,7.5rem);line-height:.85;letter-spacing:-.03em;margin:0}
+  .tile .sub{margin:10px 0 0;font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+  .tile.is-primary{background:var(--primary);color:#000}
+  .tile.is-secondary{background:var(--secondary);color:#000}
+  .tile.is-tilt{transform:rotate(-1.6deg);background:var(--accent);color:#000}
+  .pair{display:grid;gap:24px;grid-template-columns:1fr}
+  .pair .tile{padding:18px}
+  .pair .figure{font-size:clamp(2.6rem,7vw,3.4rem)}
+
+  /* ---------- month chart ---------- */
+  .chart{grid-column:span 12;border:3px solid var(--border);background:var(--surface);box-shadow:var(--shadow-brutal);padding:22px 22px 16px}
+  @media (min-width:1000px){.chart{grid-column:span 8}}
+  .panel-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:18px}
+  .panel-head h2{margin:0;font-size:1.35rem;text-transform:uppercase;letter-spacing:.02em}
+  .legend{display:flex;gap:14px;font-family:"DM Mono",monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase}
+  .legend i{display:inline-block;width:11px;height:11px;border:2px solid var(--border);margin-right:5px;vertical-align:-1px}
+  .bars{display:flex;align-items:flex-end;gap:clamp(6px,1.1vw,14px);height:230px;border-bottom:3px solid var(--border);padding-bottom:0}
+  .chart-scroll{overflow-x:auto;padding-bottom:4px}
+  @media (max-width:820px){.bars,.bar-months{min-width:640px}}
+  .bar-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;min-width:0;height:100%}
+  .bar-value{font-family:Caprasimo;font-size:.95rem;line-height:1}
+  .bar{width:100%;border:3px solid var(--border);background:var(--surface);box-shadow:var(--shadow-brutal-sm);height:var(--h);min-height:14px;transition:transform .12s ease,box-shadow .12s ease;cursor:default}
+  .bar-col:hover .bar{transform:translate(-2px,-2px);box-shadow:6px 6px 0 0 var(--shadow-color)}
+  .bar-col.is-peak .bar{background:var(--primary)}
+  .bar-col.is-current .bar{background:var(--accent)}
+  .bar-col.is-zero .bar{background:repeating-linear-gradient(45deg,transparent 0 5px,var(--muted) 5px 10px);opacity:.5;box-shadow:none}
+  .bar-months{display:flex;gap:clamp(6px,1.1vw,14px);margin-top:8px}
+  .bar-months span{flex:1;text-align:center;font-family:"DM Mono",monospace;font-size:.62rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text-secondary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .axis-note{margin:14px 0 0;font-size:.78rem;color:var(--text-secondary)}
+
+  /* ---------- tag ledger (poster flavour: pills) ---------- */
+  .tags{grid-column:span 12;border:3px solid var(--border);background:var(--surface);box-shadow:var(--shadow-brutal);padding:22px}
+  @media (min-width:1000px){.tags{grid-column:span 4}}
+  .pill{display:flex;align-items:baseline;gap:12px;border:2px solid var(--border);background:var(--background);padding:10px 14px;margin-bottom:12px;box-shadow:var(--shadow-brutal-sm);transition:transform .12s ease}
+  .pill:hover{transform:translate(-2px,-2px)}
+  .pill .n{font-family:Caprasimo;font-size:2rem;line-height:1;min-width:2.8em}
+  .pill .name{font-weight:700;font-size:1rem}
+  .pill .share{margin-left:auto;font-family:"DM Mono",monospace;font-size:.7rem;letter-spacing:.06em}
+  .pill .track{height:8px;border:2px solid var(--border);background:var(--surface);margin-top:8px;width:100%}
+  .pill .track i{display:block;height:100%;background:var(--secondary);width:var(--w)}
+  .pill:nth-child(2) .track i{background:var(--primary)}
+  .pill:nth-child(3) .track i{background:var(--accent)}
+  .pill-body{flex:1;min-width:0}
+
+  /* ---------- top day film strip ---------- */
+  .topday{grid-column:span 12;border:3px solid var(--border);background:var(--surface);box-shadow:var(--shadow-brutal);padding:22px}
+  .topday .strip{display:flex;gap:10px;overflow-x:auto;padding:6px 4px 10px}
+  .topday img{width:76px;height:76px;flex:none;object-fit:cover;border:2px solid var(--border);box-shadow:var(--shadow-brutal-sm);background:var(--muted)}
+  .day-fig{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .day-fig .n{font-family:Caprasimo;font-size:3rem;line-height:1}
+  .day-fig .d{font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .day-fig .hint{font-family:"DM Mono",monospace;font-size:.7rem;color:var(--text-secondary)}
+
+  /* ---------- ticker ---------- */
+  .ticker{margin-top:32px;border-top:4px solid var(--border);border-bottom:4px solid var(--border);background:var(--accent);color:#000;overflow:hidden}
+  .ticker-track{display:flex;gap:36px;white-space:nowrap;padding:10px 0;animation:marquee 26s linear infinite;font-family:Caprasimo;font-size:1.05rem;text-transform:uppercase;letter-spacing:.06em}
+  .ticker-track span{display:inline-flex;align-items:center;gap:10px}
+  .ticker-track span::after{content:"";width:8px;height:8px;background:#000;display:inline-block}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.ticker-track{animation:none}}
+
+  footer{border-top:4px solid var(--border);margin-top:40px;padding:20px 0;font-size:.78rem;color:var(--text-secondary)}
+
+  @media (prefers-reduced-motion:reduce){
+    .btn,.bar,.pill{transition:none}
+    .btn:hover,.pill:hover,.bar-col:hover .bar{transform:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="#">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 256 256" width="32" height="32">
+          <rect width="256" height="256" fill="#FFE66D"/>
+          <rect x="16" y="16" width="224" height="224" fill="#FF6B6B" stroke="black" stroke-width="16"/>
+          <path d="M 64 192 V 80 L 128 144 L 192 80 V 192" stroke="black" stroke-width="24" stroke-linecap="square" fill="none"/>
+        </svg>
+      </span>
+      <span class="brand-name">Mathis Gallery</span>
+    </a>
+    <div class="header-actions">
+      <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch between light and dark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <a class="btn" href="#">Login</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="page-head">
+    <h1>Mathis&rsquo;s Artwork</h1>
+    <div class="segmented" role="tablist" aria-label="View mode">
+      <button class="seg" role="tab" aria-selected="false" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Grid
+      </button>
+      <button class="seg" role="tab" aria-selected="false" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 6h11M10 12h11M10 18h11M4 6h1M4 12h1M4 18h1"/></svg>
+        Timeline
+      </button>
+      <button class="seg" role="tab" aria-selected="true" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="M7 15l4-6 3 4 5-8"/></svg>
+        Analytics
+      </button>
+    </div>
+  </div>
+
+  <div class="search" role="search" aria-label="Search artworks">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input name="search" type="search" placeholder="Search artworks…" aria-label="Search artworks" />
+  </div>
+
+  <div class="tagbar" aria-label="Filter by tag">
+    <button class="chip" type="button" aria-pressed="false">线条</button>
+    <button class="chip" type="button" aria-pressed="false">颜色</button>
+    <button class="chip" type="button" aria-pressed="false">上色</button>
+    <button class="chip" type="button" aria-pressed="false">文字</button>
+    <button class="chip" type="button" aria-pressed="false">粘贴</button>
+    <span class="spacer"></span>
+    <button class="chip" type="button" aria-label="Toggle date filter">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="0"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+    </button>
+  </div>
+
+  <div class="scope">
+    <p style="margin:0">Whole gallery &middot; <b>103 works</b> &middot; <b>138 photos</b> &middot; first work 10 Feb 2025</p>
+    <p style="margin:0">No filters active</p>
+  </div>
+
+  <div class="poster">
+    <div class="hero">
+      <div class="tile is-primary">
+        <p class="kicker">Works in the gallery</p>
+        <p class="figure">103</p>
+        <p class="sub">Since 10 Feb 2025 &middot; 20 months</p>
+      </div>
+      <div class="tile is-secondary">
+        <p class="kicker">Photographs uploaded</p>
+        <p class="figure">138</p>
+        <p class="sub">1.34 photos per work</p>
+      </div>
+      <div class="pair">
+        <div class="tile is-tilt">
+          <p class="kicker">Tags in use</p>
+          <p class="figure">5</p>
+        </div>
+        <div class="tile" style="margin-top:24px">
+          <p class="kicker">Works with &gt;1 photo</p>
+          <p class="figure">19</p>
+        </div>
+      </div>
+    </div>
+
+    <section class="chart" aria-labelledby="chart-a-title">
+      <div class="panel-head">
+        <h2 id="chart-a-title">Works per month</h2>
+        <p class="legend">
+          <span><i style="background:var(--primary)"></i>peak month</span>
+          <span><i style="background:var(--accent)"></i>September (so far)</span>
+        </p>
+      </div>
+      <div class="chart-scroll">
+        <div class="bars" role="img" aria-label="Works per month: Feb 2025 two, Apr 2025 one, Sep 2025 one, Dec 2025 one, Jan 2026 five, Feb 2026 seven, Mar 2026 three, Apr 2026 six, May 2026 two, Jun 2026 two, Jul 2026 twenty-eight, Aug 2026 twenty-seven, Sep 2026 eighteen.">
+        <div class="bar-col is-zero" style="--h:8%"><span class="bar-value">2</span><div class="bar"></div></div>
+        <div class="bar-col is-zero" style="--h:5%"><span class="bar-value">1</span><div class="bar"></div></div>
+        <div class="bar-col is-zero" style="--h:5%"><span class="bar-value">1</span><div class="bar"></div></div>
+        <div class="bar-col is-zero" style="--h:5%"><span class="bar-value">1</span><div class="bar"></div></div>
+        <div class="bar-col" style="--h:18%"><span class="bar-value">5</span><div class="bar"></div></div>
+        <div class="bar-col" style="--h:25%"><span class="bar-value">7</span><div class="bar"></div></div>
+        <div class="bar-col" style="--h:11%"><span class="bar-value">3</span><div class="bar"></div></div>
+        <div class="bar-col" style="--h:21%"><span class="bar-value">6</span><div class="bar"></div></div>
+        <div class="bar-col" style="--h:8%"><span class="bar-value">2</span><div class="bar"></div></div>
+        <div class="bar-col" style="--h:8%"><span class="bar-value">2</span><div class="bar"></div></div>
+        <div class="bar-col is-peak" style="--h:100%"><span class="bar-value">28</span><div class="bar"></div></div>
+        <div class="bar-col is-peak" style="--h:96%"><span class="bar-value">27</span><div class="bar"></div></div>
+        <div class="bar-col is-current" style="--h:64%"><span class="bar-value">18</span><div class="bar"></div></div>
+        </div>
+        <div class="bar-months" aria-hidden="true">
+          <span>Feb&nbsp;25</span><span>Apr</span><span>Sep</span><span>Dec</span>
+          <span>Jan&nbsp;26</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span>
+        </div>
+      </div>
+      <p class="axis-note">July and August alone hold <b>55 of 103</b> works &mdash; more than the preceding nine months combined.</p>
+    </section>
+
+    <section class="tags" aria-labelledby="tags-a-title">
+      <div class="panel-head"><h2 id="tags-a-title">Tags</h2><p class="legend mono">by works</p></div>
+
+      <div class="pill">
+        <span class="n">76</span>
+        <span class="pill-body">
+          <span class="name">线条</span> <span class="share">74%</span>
+          <span class="track"><i style="--w:74%"></i></span>
+        </span>
+      </div>
+      <div class="pill">
+        <span class="n">47</span>
+        <span class="pill-body">
+          <span class="name">颜色</span> <span class="share">46%</span>
+          <span class="track"><i style="--w:46%"></i></span>
+        </span>
+      </div>
+      <div class="pill">
+        <span class="n">10</span>
+        <span class="pill-body">
+          <span class="name">上色</span> <span class="share">10%</span>
+          <span class="track"><i style="--w:10%"></i></span>
+        </span>
+      </div>
+      <div class="pill">
+        <span class="n">4</span>
+        <span class="pill-body">
+          <span class="name">文字</span> <span class="share">4%</span>
+          <span class="track"><i style="--w:4%"></i></span>
+        </span>
+      </div>
+      <div class="pill">
+        <span class="n">3</span>
+        <span class="pill-body">
+          <span class="name">粘贴</span> <span class="share">3%</span>
+          <span class="track"><i style="--w:3%"></i></span>
+        </span>
+      </div>
+      <p class="axis-note"><b>线条</b> grew the most this quarter: 60 works in Jul&ndash;Sep vs 8 in Apr&ndash;Jun.</p>
+    </section>
+
+    <section class="topday" aria-labelledby="topday-a-title">
+      <div class="panel-head"><h2 id="topday-a-title">Busiest day</h2><p class="legend mono">by works dated</p></div>
+      <div class="day-fig">
+        <span class="n">11</span>
+        <span class="d">works on 17 July 2026</span>
+        <span class="hint">next: 17 Aug 2026 &middot; 8 works</span>
+      </div>
+      <div class="strip">
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/2195a1b2-59b3-4c80-8f19-aaa55614edef/dd8594d0-0075-4182-8ac8-16ee85db3096.jpg" alt="Work dated 17 July 2026" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/b135b4c0-841c-48cc-9922-8d3f412b3257/8feb4caa-9d5e-41eb-9071-7e2553c981a4.jpg" alt="" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/6843c118-0fc1-4bcc-83bd-41fe0aff3ab7/238bfb20-f992-4366-982f-379513d26d08.jpg" alt="" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/32762b21-583e-4bca-8a32-91ac4bec380d/97dc4274-1848-438e-9ff4-87d0b0ff27ad.jpg" alt="" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/ec28aae2-19e0-42d6-97f4-34c7ece11111/a32ad20e-a3fc-4e32-94da-c09d7e5ec3a9.jpg" alt="" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/952f74d5-d3e7-4224-b13d-7abc7d0778fb/943a9c20-2f88-4deb-b516-aaee364437ff.jpg" alt="" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/f2694818-67eb-460a-92ca-6baa346109a6/b5cdd039-4357-4c74-a9bf-14f24a94d54d.jpg" alt="" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/9c1440b3-0817-4f3c-a826-46d4db454908/3c10f23f-d6f4-4641-b29b-7576280f821d.jpg" alt="" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/64dc608a-c7d2-48bf-9141-e4cc8a7e4cff/579c879c-00ec-4675-a54d-c279be469f8d.jpg" alt="" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/1ec3c310-1e49-4da6-9c93-b3d8c08a6910/21251909-514f-4d7e-9684-3ea95a14027c.jpg" alt="" loading="lazy" />
+        <img src="https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/9a910431-2a35-429a-832a-3813da6dd2f5/7d57f641-c4b5-4242-85f8-0c13ab3a826c.jpg" alt="" loading="lazy" />
+      </div>
+      <p class="axis-note">Thumbnails link straight into the Grid view filtered to that date.</p>
+    </section>
+  </div>
+</main>
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>线条 ×76</span><span>颜色 ×47</span><span>上色 ×10</span><span>文字 ×4</span><span>粘贴 ×3</span><span>138 photographs</span><span>13 active months</span>
+    <span>线条 ×76</span><span>颜色 ×47</span><span>上色 ×10</span><span>文字 ×4</span><span>粘贴 ×3</span><span>138 photographs</span><span>13 active months</span>
+  </div>
+</div>
+
+<footer class="container">
+  Prototype A &mdash; Poster. Numbers reflect the real production gallery (103 works) on 27 Sep 2026.
+</footer>
+
+<div class="proto">OPTION A — POSTER</div>
+
+<script>
+  const root = document.documentElement;
+  const toggle = document.querySelector("[data-theme-toggle]");
+  toggle.addEventListener("click", () => {
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    root.dataset.theme = next;
+    try { localStorage.setItem("proto-theme", next); } catch {}
+  });
+  try {
+    const saved = localStorage.getItem("proto-theme");
+    if (saved) root.dataset.theme = saved;
+  } catch {}
+</script>
+</body>
+</html>

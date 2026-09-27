@@ -63,7 +63,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
         />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Caprasimo&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Caprasimo&family=DM+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />

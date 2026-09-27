@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, Search, X } from "lucide-react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
@@ -11,6 +11,7 @@ import {
   useSyncExternalStore,
 } from "react";
 
+import { AnalyticsView } from "@/components/gallery/analytics-view";
 import {
   GalleryFilters,
   type GalleryFiltersState,
@@ -23,6 +24,7 @@ import {
   type ViewMode,
 } from "@/components/gallery/view-mode-toggle";
 import { Input } from "@/components/ui/input";
+import type { GalleryStats } from "@/lib/data/stats";
 import type { Work } from "@/lib/types";
 
 type WorksResponse = {
@@ -33,6 +35,7 @@ type WorksResponse = {
 
 type Props = {
   initialData: WorksResponse;
+  initialStats: GalleryStats | null;
   tags: string[];
   initialFilters: GalleryFiltersState;
   initialMode: ViewMode;
@@ -48,7 +51,9 @@ function subscribeToStoredViewMode(onStoreChange: () => void) {
 
 const readStoredViewMode = (): ViewMode | null => {
   const saved = localStorage.getItem(VIEW_MODE_KEY);
-  return saved === "grid" || saved === "timeline" ? saved : null;
+  return saved === "grid" || saved === "timeline" || saved === "analytics"
+    ? saved
+    : null;
 };
 
 const readServerViewMode = () => null;
@@ -60,12 +65,17 @@ const defaultFilters: GalleryFiltersState = {
   to: "",
 };
 
-function toSearchParams(filters: GalleryFiltersState, mode: ViewMode) {
+function filterParams(filters: GalleryFiltersState) {
   const params = new URLSearchParams();
   if (filters.query.trim()) params.set("query", filters.query.trim());
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
   if (filters.tags.length > 0) params.set("tags", filters.tags.join(","));
+  return params;
+}
+
+function toSearchParams(filters: GalleryFiltersState, mode: ViewMode) {
+  const params = filterParams(filters);
   if (mode !== "grid") params.set("mode", mode);
   return params;
 }
@@ -87,14 +97,9 @@ async function fetchWorks({
   pageParam?: number;
   filters: GalleryFiltersState;
 }) {
-  const params = new URLSearchParams({
-    page: String(pageParam),
-    pageSize: "20",
-  });
-  if (filters.query.trim()) params.set("query", filters.query.trim());
-  if (filters.from) params.set("from", filters.from);
-  if (filters.to) params.set("to", filters.to);
-  if (filters.tags.length > 0) params.set("tags", filters.tags.join(","));
+  const params = filterParams(filters);
+  params.set("page", String(pageParam));
+  params.set("pageSize", "20");
 
   const response = await fetch(`/api/works?${params.toString()}`, {
     method: "GET",
@@ -106,8 +111,21 @@ async function fetchWorks({
   return (await response.json()) as WorksResponse;
 }
 
+async function fetchStats(filters: GalleryFiltersState) {
+  const params = filterParams(filters);
+  const response = await fetch(`/api/stats?${params.toString()}`, {
+    method: "GET",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch stats");
+  }
+
+  return (await response.json()) as GalleryStats;
+}
+
 export function GalleryClient({
   initialData,
+  initialStats,
   tags,
   initialFilters,
   initialMode,
@@ -158,11 +176,16 @@ export function GalleryClient({
 
   useEffect(() => {
     const params = toSearchParams(debouncedFilters, viewMode);
+    // A deep link that arrived with an explicit mode keeps it; otherwise the
+    // rewrite would drop `mode` and the stored preference would take over.
+    if (viewMode === "grid" && modeFromQuery) {
+      params.set("mode", "grid");
+    }
     const nextUrl = params.toString()
       ? `${pathname}?${params.toString()}`
       : pathname;
     router.replace(nextUrl, { scroll: false });
-  }, [debouncedFilters, pathname, router, viewMode]);
+  }, [debouncedFilters, modeFromQuery, pathname, router, viewMode]);
 
   const query = useInfiniteQuery({
     queryKey: ["works", debouncedFilters],
@@ -179,7 +202,22 @@ export function GalleryClient({
         }
       : undefined,
     getNextPageParam: (lastPage) => lastPage.nextPage,
+    // The Analytics view never paginates, so the feed stays idle there.
+    enabled: viewMode !== "analytics",
   });
+
+  const statsQuery = useQuery({
+    queryKey: ["stats", debouncedFilters],
+    queryFn: () => fetchStats(debouncedFilters),
+    initialData: filtersEqual(initialFilters, debouncedFilters)
+      ? (initialStats ?? undefined)
+      : undefined,
+    enabled: viewMode === "analytics",
+    // Server-rendered stats are current; do not refetch them on mount.
+    staleTime: 60_000,
+  });
+
+  const stats = statsQuery.data ?? null;
 
   const works = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) ?? [],
@@ -197,6 +235,18 @@ export function GalleryClient({
     const serialized = params.toString();
     return serialized ? `/?${serialized}` : "/";
   }, [filters, viewMode]);
+
+  const hrefForRange = useCallback(
+    ({ from, to }: { from: string; to: string }) => {
+      const params = toSearchParams({ ...filters, from, to }, "grid");
+      // Explicit: without `mode`, a stored "analytics" preference would keep
+      // the reader here instead of opening the range in the Grid they asked for.
+      params.set("mode", "grid");
+      const serialized = params.toString();
+      return serialized ? `/?${serialized}` : "/";
+    },
+    [filters],
+  );
 
   return (
     <section className="space-y-4">
@@ -245,50 +295,78 @@ export function GalleryClient({
         onClear={() => setFilters(defaultFilters)}
       />
 
-      {(() => {
-        const active =
-          Boolean(
+      {viewMode !== "analytics" &&
+        (() => {
+          const active = Boolean(
             debouncedFilters.query ||
               debouncedFilters.tags.length ||
               debouncedFilters.from ||
               debouncedFilters.to,
           );
-        if (!active) return null;
-        if (query.isFetching && !query.isFetchingNextPage) {
+          if (!active) return null;
+          if (query.isFetching && !query.isFetchingNextPage) {
+            return (
+              <p
+                aria-live="polite"
+                className="flex items-center gap-2 text-sm text-[var(--text-secondary)]"
+              >
+                <Loader2 className="size-4 animate-spin" />
+                Searching…
+              </p>
+            );
+          }
           return (
-            <p aria-live="polite" className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-              <Loader2 className="size-4 animate-spin" />
-              Searching…
+            <p
+              aria-live="polite"
+              className="text-sm text-[var(--text-secondary)]"
+            >
+              {works.length > 0
+                ? `${works.length} ${works.length === 1 ? "work" : "works"} found`
+                : "No works match your search"}
             </p>
           );
-        }
-        return (
-          <p aria-live="polite" className="text-sm text-[var(--text-secondary)]">
-            {works.length > 0
-              ? `${works.length} ${works.length === 1 ? "work" : "works"} found`
-              : "No works match your search"}
-          </p>
-        );
-      })()}
+        })()}
 
       {viewMode === "grid" ? (
         <GridView backHref={backHref} works={works} />
-      ) : (
+      ) : viewMode === "timeline" ? (
         <TimelineView backHref={backHref} works={works} />
-      )}
-
-      <InfiniteLoader
-        enabled={Boolean(query.hasNextPage)}
-        onLoadMore={onLoadMore}
-      />
-      {query.isFetchingNextPage ? (
+      ) : statsQuery.isError ? (
+        <p className="rounded-none border border-dashed border-[var(--border)] p-10 text-center text-sm text-[var(--text-secondary)]">
+          Could not load statistics. Please try again.
+        </p>
+      ) : stats ? (
+        <AnalyticsView
+          filters={filters}
+          hrefForRange={hrefForRange}
+          stats={stats}
+        />
+      ) : (
         <p
           aria-live="polite"
-          className="text-center text-sm text-[var(--text-secondary)]"
+          className="flex items-center justify-center gap-2 py-10 text-sm text-[var(--text-secondary)]"
         >
-          Loading more…
+          <Loader2 className="size-4 animate-spin" />
+          Loading statistics…
         </p>
-      ) : null}
+      )}
+
+      {viewMode !== "analytics" && (
+        <>
+          <InfiniteLoader
+            enabled={Boolean(query.hasNextPage)}
+            onLoadMore={onLoadMore}
+          />
+          {query.isFetchingNextPage ? (
+            <p
+              aria-live="polite"
+              className="text-center text-sm text-[var(--text-secondary)]"
+            >
+              Loading more…
+            </p>
+          ) : null}
+        </>
+      )}
     </section>
   );
 }

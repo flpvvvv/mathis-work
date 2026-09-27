@@ -339,6 +339,28 @@ Step-by-step flow:
 - Defaults to Grid on first visit
 - Toggle is a segmented control in the header
 
+### 7.4 Analytics View
+
+Summary of the gallery at a glance — the third segment of the view toggle.
+
+- One document, two emphases: below 1024px it behaves like a poster (numbers first,
+  last six months as row bars, compact month grid, tag pills); at 1024px and up it
+  becomes the season wall (all active months as bars, quarter bands, tag
+  constellation, rhythm rail, marquee ticker)
+- Numbers describe **what the current filters match**, with the scope stated in a
+  line above the panels (`Whole gallery` / `Filtered: 线条` / `Search: …` / `Date range`)
+- Panels: key figures, output over time, season wall with click-to-unfold covers,
+  tags, rhythm (month rail, streaks, quiet stretches, pace), weekday fingerprint,
+  busiest day
+- Data comes from `GET /api/stats` (`src/lib/data/stats.ts`), which fetches every
+  matching work and aggregates in one pure, unit-tested pass; the view never
+  paginates, so the infinite feed stays idle while it is open
+- "See these in the grid" / "See that day in the grid" links open the Grid
+  constrained to that month or day, keeping the other filters. They are plain
+  anchors, not `next/link`, because `GalleryClient` seeds its filter state once and
+  would not adopt the linked range on a soft navigation
+- Empty state reuses the Grid/Timeline copy: "No works found for these filters."
+
 ---
 
 ## 8. Design System

@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Option D — Hybrid · Analytics view · Mathis Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* ------------------------------------------------------------------
+     Option D — HYBRID
+     ONE document, ONE data source, two emphases:
+       < 1024px  ->  A's poster: hero numbers, last-6-months row bars,
+                     compact month grid, tag pills
+       >= 1024px ->  C's season wall: 13-month bar chart, quarter grid,
+                     tag constellation, rhythm rail
+     Only the chart and the tag list exist twice in markup; both are
+     generated from the same arrays. Everything else is one tree that
+     re-flows. Chrome below is identical to options A/B/C.
+     Data: the real production gallery on 27 Sep 2026.
+     ------------------------------------------------------------------ */
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --background:#FFF8F0; --surface:#FFFFFF;
+    --primary:#FF6B6B; --secondary:#4ECDC4; --accent:#FFE66D;
+    --text-primary:#000; --text-secondary:#333;
+    --border:#000; --shadow-color:#000; --muted:#E2E8F0;
+    --shadow-brutal:8px 8px 0 0 var(--shadow-color);
+    --shadow-brutal-sm:4px 4px 0 0 var(--shadow-color);
+    --shadow-brutal-lg:12px 12px 0 0 var(--shadow-color);
+  }
+  html[data-theme="dark"]{
+    --background:#1A1A2E; --surface:#242440;
+    --text-primary:#F5F0EB; --text-secondary:#B8AFA6;
+    --border:#fff; --shadow-color:#fff;
+  }
+  body{
+    margin:0; background:var(--background); color:var(--text-primary);
+    font-family:"Outfit","PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:"Caprasimo","PingFang SC",system-ui,sans-serif;font-weight:400}
+  .mono{font-family:"DM Mono",ui-monospace,SFMono-Regular,monospace}
+  button{font:inherit;color:inherit}
+  :focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--border)}
+  .container{max-width:1280px;margin:0 auto;padding-inline:1rem}
+  @media (min-width:768px){.container{padding-inline:1.5rem}}
+
+  /* ---------- chrome (identical to A/B/C) ---------- */
+  .site-header{position:sticky;top:0;z-index:50;background:var(--background);border-bottom:4px solid var(--border)}
+  .header-inner{display:flex;height:64px;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;font-family:Caprasimo;font-size:1.5rem;text-transform:uppercase;letter-spacing:.06em}
+  .brand .mark{width:32px;height:32px;flex:none;box-shadow:var(--shadow-brutal-sm)}
+  .header-actions{display:flex;align-items:center;gap:8px}
+  .btn{border:2px solid var(--border);background:var(--surface);padding:8px 16px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-brutal-sm);transition:transform .12s ease,box-shadow .12s ease;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 0 var(--shadow-color)}
+  .icon-btn{width:40px;height:40px;display:grid;place-items:center;border:2px solid var(--border);background:var(--surface);cursor:pointer;box-shadow:var(--shadow-brutal-sm)}
+  .icon-btn:hover{background:var(--accent);color:#000}
+  main{padding-bottom:72px}
+  .page-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 16px}
+  h1{font-size:clamp(1.9rem,6vw,3rem);line-height:1;margin:0;text-transform:uppercase;letter-spacing:-.02em;text-shadow:2px 2px 0 var(--shadow-color)}
+  .segmented{display:inline-flex;border:2px solid var(--border);background:var(--surface);padding:4px}
+  .seg{border:0;background:transparent;padding:6px 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .seg:hover{background:var(--accent);color:#000}
+  .seg[aria-selected="true"]{background:var(--primary);color:#000}
+  .search{position:relative}
+  .search input{width:100%;height:48px;border:2px solid var(--border);background:var(--surface);color:inherit;padding:0 48px;font-size:1rem;box-shadow:var(--shadow-brutal-sm)}
+  .search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none}
+  .tagbar{display:flex;align-items:center;gap:8px;margin:12px 0 0;overflow-x:auto;padding-bottom:4px}
+  .tagbar .chip{flex:none;border:2px solid var(--border);background:var(--surface);padding:4px 12px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;font-family:Caprasimo}
+  .tagbar .chip:hover{background:var(--accent);color:#000}
+  .tagbar .spacer{flex:1}
+  .scope{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 0;font-size:.78rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .scope b{color:var(--text-primary)}
+  .proto{position:fixed;right:16px;bottom:16px;z-index:80;border:2px solid var(--border);background:var(--accent);color:#000;padding:6px 10px;font-family:"DM Mono",monospace;font-size:.7rem;letter-spacing:.04em;box-shadow:var(--shadow-brutal-sm)}
+
+  /* ---------- the one grid ---------- */
+  .hy{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:18px;margin-top:22px}
+  .hy > *{grid-column:1/-1;min-width:0}
+  @media (min-width:1024px){
+    .hy{gap:20px}
+    .h-hero{grid-row:1;grid-column:1/-1}
+    .h-chart{grid-row:2;grid-column:1/9}
+    .h-rhythm{grid-row:2;grid-column:9/13}
+    .h-season{grid-row:3;grid-column:1/9}
+    .h-week{grid-row:3;grid-column:9/13}
+    .h-tags{grid-row:4;grid-column:1/-1}
+    .h-day{grid-row:5;grid-column:1/-1}
+  }
+  .panel{border:2px solid var(--border);background:var(--surface);box-shadow:var(--shadow-brutal);padding:18px;min-width:0}
+  @media (min-width:1024px){.panel{padding:20px}}
+  .panel > header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:14px}
+  .panel h2{margin:0;font-size:1.1rem;text-transform:uppercase;letter-spacing:.03em}
+  .panel .meta{font-family:"DM Mono",monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary)}
+  .note{font-size:.82rem;margin:12px 0 0;color:var(--text-primary)}
+  .note.quiet{color:var(--text-secondary)}
+
+  /* dynamic import order kept explicit below: the presentation switch
+     lives at the END of this stylesheet so it always wins. */
+
+  /* ---------- hero numbers (A) ---------- */
+  .hero-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media (min-width:700px){.hero-tiles{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}}
+  .tile{border:3px solid var(--border);background:var(--surface);padding:14px;box-shadow:var(--shadow-brutal-sm)}
+  .tile .kicker{font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin:0 0 6px}
+  .tile .figure{font-family:Caprasimo;font-size:clamp(2.4rem,10vw,3.6rem);line-height:.9;letter-spacing:-.02em;margin:0}
+  .tile .sub{margin:8px 0 0;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+  .tile.is-primary{background:var(--primary);color:#000}
+  .tile.is-secondary{background:var(--secondary);color:#000}
+  .tile.is-accent{background:var(--accent);color:#000}
+
+  /* ---------- chart: bars on desktop (A), rows on mobile ---------- */
+  .bars{display:flex;align-items:flex-end;gap:clamp(6px,1vw,14px);height:210px;border-bottom:3px solid var(--border)}
+  .bar-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;min-width:0;height:100%}
+  .bar-value{font-family:Caprasimo;font-size:.9rem;line-height:1}
+  .bar{width:100%;border:3px solid var(--border);background:var(--surface);height:var(--h);min-height:12px;box-shadow:var(--shadow-brutal-sm);transition:transform .12s ease}
+  .bar-col:hover .bar{transform:translate(-2px,-2px)}
+  .bar-col.is-peak .bar{background:var(--primary)}
+  .bar-col.is-current .bar{background:var(--accent)}
+  .bar-col.is-odd .bar{background:repeating-linear-gradient(45deg,transparent 0 5px,var(--muted) 5px 10px);box-shadow:none}
+  .bar-months{display:flex;gap:clamp(6px,1vw,14px);margin-top:8px}
+  .bar-months span{flex:1;text-align:center;font-family:"DM Mono",monospace;font-size:.6rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text-secondary);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;font-family:"DM Mono",monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase}
+  .legend i{display:inline-block;width:11px;height:11px;border:2px solid var(--border);margin-right:5px;vertical-align:-1px}
+
+  .rows{margin:0;padding:0;list-style:none}
+  .rows li{display:grid;grid-template-columns:5.4rem 1.8rem 1fr;align-items:center;gap:12px;padding:7px 0;border-bottom:2px solid var(--border)}
+  .rows li:last-child{border-bottom:0}
+  .r-label{font-family:"DM Mono",monospace;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary)}
+  .r-count{font-family:Caprasimo;font-size:1.1rem;line-height:1;text-align:right}
+  .r-track{height:14px;border:2px solid var(--border);background:var(--background);display:block}
+  .r-track i{display:block;height:100%;background:var(--secondary);width:var(--w)}
+  .rows li.is-peak .r-track i{background:var(--primary)}
+  .rows li.is-current .r-track i{background:var(--accent)}
+
+  /* ---------- season wall (C) ---------- */
+  .year{margin-bottom:22px}
+  .year:last-of-type{margin-bottom:0}
+  .year-head{display:flex;align-items:baseline;gap:10px;border-bottom:3px solid var(--border);padding-bottom:5px;margin-bottom:12px}
+  .year-head .y{font-family:Caprasimo;font-size:1.9rem;line-height:1}
+  .year-head .t{font-family:"DM Mono",monospace;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary)}
+  .quarters{display:grid;gap:10px;grid-template-columns:1fr}
+  @media (min-width:780px){.quarters{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}}
+  .quarter{border:2px dashed var(--border);padding:10px}
+  @media (max-width:779px){.quarter{border:0;padding:0}.qk{display:none}}
+  .qk{font-family:"DM Mono",monospace;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:8px;display:block}
+  .months{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  @media (min-width:780px){.months{gap:8px}}
+  .month{border:2px solid var(--border);background:var(--background);padding:6px 5px;cursor:pointer;text-align:left;transition:transform .12s ease,box-shadow .12s ease;display:flex;flex-direction:column;gap:2px}
+  .month:hover{transform:translate(-2px,-2px);box-shadow:var(--shadow-brutal-sm);z-index:2}
+  .month[aria-pressed="true"]{outline:3px solid var(--text-primary);outline-offset:2px}
+  .month .mname{font-family:"DM Mono",monospace;font-size:.54rem;letter-spacing:.08em;text-transform:uppercase}
+  .month .mcount{font-family:Caprasimo;font-size:1.35rem;line-height:1}
+  .month[data-l="0"]{border-style:dashed;color:var(--text-secondary);background:transparent}
+  .month[data-l="0"] .mcount{font-size:1rem}
+  .month[data-l="1"]{background:var(--accent);color:#000}
+  .month[data-l="2"]{background:var(--secondary);color:#000}
+  .month[data-l="3"]{background:var(--primary);color:#000}
+  .unfold{border:3px solid var(--border);background:var(--background);margin-top:14px;padding:12px}
+  .unfold-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:10px}
+  .unfold-head .big{font-family:Caprasimo;font-size:1.7rem;line-height:1}
+  .unfold-head .sub{font-family:"DM Mono",monospace;font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary)}
+  .thumbs{display:flex;gap:8px;overflow-x:auto;padding:3px 2px 6px}
+  .thumbs img{width:72px;height:72px;flex:none;object-fit:cover;border:2px solid var(--border);box-shadow:var(--shadow-brutal-sm);background:var(--muted);display:block}
+  .thumbs .more{width:72px;height:72px;display:grid;place-items:center;background:var(--accent);color:#000;font-family:Caprasimo;font-size:1rem;border:2px solid var(--border);flex:none}
+  .ramp{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-family:"DM Mono",monospace;font-size:.6rem;text-transform:uppercase;color:var(--text-secondary);margin-top:12px}
+  .ramp i{width:13px;height:13px;border:2px solid var(--border);display:inline-block;margin-right:5px;vertical-align:-3px}
+  .ramp .zero{border-style:dashed;background:transparent}
+
+  /* ---------- rhythm rail (C) ---------- */
+  .rail{display:grid;grid-template-columns:auto repeat(12,minmax(0,1fr));gap:4px;align-items:center;margin:2px 0 8px}
+  .rail .rl{font-family:"DM Mono",monospace;font-size:.55rem;color:var(--text-secondary)}
+  .rail .rh{font-family:"DM Mono",monospace;font-size:.48rem;text-align:center;color:var(--text-secondary);text-transform:uppercase}
+  .dot{aspect-ratio:1;min-width:0;border:2px solid var(--border);background:var(--surface);display:grid;place-items:center;font-family:"DM Mono",monospace;font-size:.46rem;color:var(--text-secondary)}
+  .dot[data-on="1"]{background:var(--secondary);color:#000}
+  .dot[data-on="1"][data-best="1"]{background:var(--primary)}
+  .dot[data-quiet="1"]{border-style:dashed;background:transparent}
+  .dot[data-future="1"]{border-style:dotted;opacity:.5}
+  .facts{margin:10px 0 0;padding:0;list-style:none}
+  .facts li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:2px dashed var(--border);font-size:.8rem}
+  .facts li:last-child{border-bottom:0}
+  .facts .fk{color:var(--text-secondary)}
+  .facts .fv{font-weight:700;text-align:right}
+
+  /* ---------- weekday fingerprint (C) ---------- */
+  .finger{display:flex;align-items:flex-end;gap:6px;height:118px}
+  .fcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;min-width:0}
+  .fcol .fv{font-family:"DM Mono",monospace;font-size:.62rem}
+  .fcol .fb{width:100%;border:2px solid var(--border);background:var(--secondary);height:var(--h);min-height:6px}
+  .fcol.is-top .fb{background:var(--primary)}
+  .flabels{display:flex;gap:6px;margin-top:6px}
+  .flabels span{flex:1;text-align:center;font-family:"DM Mono",monospace;font-size:.56rem;text-transform:uppercase;color:var(--text-secondary)}
+
+  /* ---------- tags: constellation (desktop) / pills (mobile) ---------- */
+  .tag-band{display:grid;gap:18px;grid-template-columns:1fr}
+  @media (min-width:900px){.tag-band{grid-template-columns:1.15fr 1fr}}
+  .constellation{position:relative;height:236px;border:2px dashed var(--border);background:radial-gradient(circle at 1px 1px,var(--muted) 1px,transparent 0) 0 0/14px 14px}
+  .blob{position:absolute;border:3px solid var(--border);border-radius:50%;display:grid;place-items:center;box-shadow:var(--shadow-brutal-sm);animation:float 6s ease-in-out infinite}
+  .blob .bn{font-family:Caprasimo;line-height:1}
+  .blob .bl{font-size:.58rem;font-weight:700;letter-spacing:.05em}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-7px) rotate(1.5deg)}}
+  .pills{margin:0;padding:0;list-style:none}
+  .pills li{display:flex;align-items:baseline;gap:12px;border:2px solid var(--border);background:var(--background);padding:8px 12px;margin-bottom:10px;box-shadow:var(--shadow-brutal-sm)}
+  .pills .n{font-family:Caprasimo;font-size:1.7rem;line-height:1;min-width:2.6em}
+  .pills .body{flex:1;min-width:0}
+  .pills .name{font-weight:700}
+  .pills .share{font-family:"DM Mono",monospace;font-size:.66rem;float:right}
+  .pills .track{display:block;height:8px;border:2px solid var(--border);background:var(--surface);margin-top:6px}
+  .pills .track i{display:block;height:100%;background:var(--secondary);width:var(--w)}
+  .pills li:nth-child(2) .track i{background:var(--primary)}
+  .pills li:nth-child(3) .track i{background:var(--accent)}
+
+  /* ---------- busiest day ---------- */
+  .day-fig{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .day-fig .n{font-family:Caprasimo;font-size:2.6rem;line-height:1}
+  .day-fig .d{font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:.9rem}
+  .day-fig .hint{font-family:"DM Mono",monospace;font-size:.66rem;color:var(--text-secondary)}
+
+  /* ticker: desktop only, flavour kept from A */
+  .ticker{margin-top:34px;border-top:4px solid var(--border);border-bottom:4px solid var(--border);background:var(--accent);color:#000;overflow:hidden}
+  .ticker-track{display:flex;gap:34px;white-space:nowrap;padding:9px 0;animation:marquee 26s linear infinite;font-family:Caprasimo;font-size:1rem;text-transform:uppercase;letter-spacing:.06em}
+  .ticker-track span::after{content:"";width:8px;height:8px;background:#000;display:inline-block;margin-left:10px}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.ticker-track{animation:none}.blob{animation:none}}
+  footer{border-top:4px solid var(--border);margin-top:34px;padding:18px 0;font-size:.76rem;color:var(--text-secondary)}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+
+  /* ---------- presentation switch: one breakpoint for the whole design.
+       Declared last so it beats component display rules of equal weight
+       (.legend{display:flex}, .pills, .ticker, ...). ---------- */
+  .only-mobile{display:block}
+  .only-desktop{display:none}
+  @media (min-width:1024px){
+    .only-mobile{display:none}
+    .only-desktop{display:block}
+    .legend.only-desktop{display:flex}
+    .ticker.only-desktop{display:block}
+    .constellation.only-desktop{display:block}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="#">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 256 256" width="32" height="32">
+          <rect width="256" height="256" fill="#FFE66D"/>
+          <rect x="16" y="16" width="224" height="224" fill="#FF6B6B" stroke="black" stroke-width="16"/>
+          <path d="M 64 192 V 80 L 128 144 L 192 80 V 192" stroke="black" stroke-width="24" stroke-linecap="square" fill="none"/>
+        </svg>
+      </span>
+      <span class="brand-name">Mathis Gallery</span>
+    </a>
+    <div class="header-actions">
+      <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch between light and dark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <a class="btn" href="#">Login</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="page-head">
+    <h1>Mathis&rsquo;s Artwork</h1>
+    <div class="segmented" role="tablist" aria-label="View mode">
+      <button class="seg" role="tab" aria-selected="false" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Grid
+      </button>
+      <button class="seg" role="tab" aria-selected="false" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 6h11M10 12h11M10 18h11M4 6h1M4 12h1M4 18h1"/></svg>
+        Timeline
+      </button>
+      <button class="seg" role="tab" aria-selected="true" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="M7 15l4-6 3 4 5-8"/></svg>
+        Analytics
+      </button>
+    </div>
+  </div>
+
+  <div class="search" role="search" aria-label="Search artworks">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input name="search" type="search" placeholder="Search artworks…" aria-label="Search artworks" />
+  </div>
+
+  <div class="tagbar" aria-label="Filter by tag">
+    <button class="chip" type="button" aria-pressed="false">线条</button>
+    <button class="chip" type="button" aria-pressed="false">颜色</button>
+    <button class="chip" type="button" aria-pressed="false">上色</button>
+    <button class="chip" type="button" aria-pressed="false">文字</button>
+    <button class="chip" type="button" aria-pressed="false">粘贴</button>
+    <span class="spacer"></span>
+    <button class="chip" type="button" aria-label="Toggle date filter">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+    </button>
+  </div>
+
+  <div class="scope">
+    <p style="margin:0">Whole gallery &middot; <b>103 works</b> &middot; <b>138 photos</b> &middot; 10 Feb 2025 &rarr; 27 Sep 2026</p>
+    <p style="margin:0">No filters active</p>
+  </div>
+
+  <div class="hy">
+    <!-- 1. numbers -->
+    <section class="h-hero" aria-label="Key figures">
+      <div class="hero-tiles">
+        <div class="tile is-primary"><p class="kicker">Works</p><p class="figure">103</p><p class="sub">Since 10 Feb 2025</p></div>
+        <div class="tile is-secondary"><p class="kicker">Photographs</p><p class="figure">138</p><p class="sub">1.34 per work</p></div>
+        <div class="tile is-accent"><p class="kicker">Tags</p><p class="figure">5</p><p class="sub">1.36 per work</p></div>
+        <div class="tile"><p class="kicker">Works with &gt;1 photo</p><p class="figure">19</p><p class="sub">18% of works</p></div>
+      </div>
+    </section>
+
+    <!-- 2. output over time: bars on desktop, last 6 rows on mobile -->
+    <section class="panel h-chart" aria-labelledby="d-pulse">
+      <header>
+        <h2 id="d-pulse">Output over time</h2>
+        <p class="legend only-desktop" aria-hidden="true">
+          <span><i style="background:var(--primary)"></i>peak</span>
+          <span><i style="background:var(--accent)"></i>September, so far</span>
+          <span><i style="background:repeating-linear-gradient(45deg,transparent 0 4px,var(--muted) 4px 8px)"></i>isolated month</span>
+        </p>
+        <p class="meta only-mobile">last 6 months &middot; 13 active of 20</p>
+      </header>
+      <div id="chart-desktop" class="only-desktop"></div>
+      <ol id="chart-mobile" class="rows only-mobile"></ol>
+      <p class="note quiet only-mobile" id="pulse-note-mobile">Jul and Aug 2026 alone hold <b>55 of 103</b> works &mdash; more than the nine months before them.</p>
+      <p class="note quiet only-desktop">Jul and Aug 2026 alone hold <b>55 of 103</b> works &mdash; more than the preceding nine months combined. Nothing has been made in Oct&ndash;Dec yet.</p>
+    </section>
+
+    <!-- 3. season wall: quarter bands on desktop, compact 3x4 months on mobile -->
+    <section class="panel h-season" aria-labelledby="d-wall">
+      <header>
+        <h2 id="d-wall">Season wall</h2>
+        <span class="meta">tap a month to unfold its photos</span>
+      </header>
+      <div id="years"></div>
+      <div class="unfold" id="unfold" aria-live="polite"></div>
+      <div class="ramp" aria-hidden="true">
+        <span><i class="zero"></i>none</span>
+        <span><i style="background:var(--accent)"></i>1&ndash;4</span>
+        <span><i style="background:var(--secondary)"></i>5&ndash;9</span>
+        <span><i style="background:var(--primary)"></i>10+</span>
+      </div>
+    </section>
+
+    <!-- 4. tags -->
+    <section class="panel h-tags" aria-labelledby="d-tags">
+      <header>
+        <h2 id="d-tags">Tags</h2>
+        <p class="meta">5 in use &middot; 1.36 per work</p>
+      </header>
+      <div class="tag-band">
+        <div id="constellation" class="constellation only-desktop" role="img" aria-label="Tags by number of works: 线条 76, 颜色 47, 上色 10, 文字 4, 粘贴 3."></div>
+        <ul id="pills" class="pills only-mobile"></ul>
+        <ul class="facts only-desktop">
+          <li><span class="fk">线条</span><span class="fv">76 works &middot; 74%</span></li>
+          <li><span class="fk">颜色</span><span class="fv">47 works &middot; 46%</span></li>
+          <li><span class="fk">上色</span><span class="fv">10 works &middot; 10%</span></li>
+          <li><span class="fk">文字</span><span class="fv">4 works &middot; first used Sep 2026</span></li>
+          <li><span class="fk">粘贴</span><span class="fv">3 works &middot; last used Mar 2026</span></li>
+          <li><span class="fk">Untagged works</span><span class="fv">none</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 5. rhythm -->
+    <section class="panel h-rhythm" aria-labelledby="d-rhythm">
+      <header><h2 id="d-rhythm">Rhythm</h2><span class="meta">Jan 2025 &rarr; Dec 2026</span></header>
+      <div class="rail" id="rail" role="img" aria-label=""></div>
+      <p class="note">13 of 20 months produced something. The last <b>9</b> in a row were active.</p>
+      <ul class="facts">
+        <li><span class="fk">Longest quiet stretch</span><span class="fv">May &rarr; Aug 2025 &middot; 4 months</span></li>
+        <li><span class="fk">Quiet stretches</span><span class="fv">3, all in 2025</span></li>
+        <li><span class="fk">Busiest day</span><span class="fv">17 Jul 2026 &middot; 11 works</span></li>
+        <li><span class="fk">Pace, 2026</span><span class="fv">10.9 works / month</span></li>
+      </ul>
+    </section>
+
+    <!-- 6. weekday fingerprint -->
+    <section class="panel h-week" aria-labelledby="d-week">
+      <header><h2 id="d-week">Weekday</h2><span class="meta">works dated</span></header>
+      <div class="finger" id="finger" role="img" aria-label="Works by weekday: Monday 14, Tuesday 7, Wednesday 6, Thursday 12, Friday 31, Saturday 8, Sunday 25."></div>
+      <div class="flabels" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+      <p class="note quiet">Friday is the studio day &mdash; <b>31</b> works; Sunday adds 25.</p>
+    </section>
+
+    <!-- 7. busiest day -->
+    <section class="panel h-day" aria-labelledby="d-day">
+      <header><h2 id="d-day">Busiest day</h2><span class="meta">by works dated</span></header>
+      <div class="day-fig">
+        <span class="n">11</span>
+        <span class="d">works on 17 July 2026</span>
+        <span class="hint">next: 17 Aug 2026 &middot; 8 works</span>
+      </div>
+      <div class="thumbs" id="day-strip"></div>
+      <p class="note quiet">Photos open in the lightbox; the date filters the Grid view to that day.</p>
+    </section>
+  </div>
+</main>
+
+<div class="ticker only-desktop" aria-hidden="true">
+  <div class="ticker-track">
+    <span>线条 ×76</span><span>颜色 ×47</span><span>上色 ×10</span><span>文字 ×4</span><span>粘贴 ×3</span><span>138 photographs</span><span>13 active months</span>
+    <span>线条 ×76</span><span>颜色 ×47</span><span>上色 ×10</span><span>文字 ×4</span><span>粘贴 ×3</span><span>138 photographs</span><span>13 active months</span>
+  </div>
+</div>
+
+<footer class="container">
+  Prototype D &mdash; Hybrid. One document: mobile under 1024px, desktop at 1024px and up. Real gallery data, 27 Sep 2026.
+</footer>
+
+<div class="proto">OPTION D — HYBRID</div>
+
+<script>
+  /* ---- theme ---- */
+  const root = document.documentElement;
+  document.querySelector("[data-theme-toggle]").addEventListener("click", () => {
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    root.dataset.theme = next;
+    try { localStorage.setItem("proto-theme", next); } catch {}
+  });
+  try { const s = localStorage.getItem("proto-theme"); if (s) root.dataset.theme = s; } catch {}
+
+  const BASE = "https://zuycsidzuhcdbkrxavav.supabase.co/storage/v1/object/public/artworks/";
+  const MNAME = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const TODAY = "2026-09";
+
+  /* ONE source: works per month + that month's covers (production, 2026-09-27). */
+  const MONTHS = {
+    "2025-01": { n: 0, t: [] },
+    "2025-02": { n: 2, t: ["464b13cc-e5a7-4048-b9d3-5eb494b27719/4be6d837-cc47-48ca-8595-339fcdede9d9.jpg","7ece085e-56cc-44c4-87a3-88c7dd1d75e7/3e5ce48e-b2df-402f-bf55-1dc784580242.jpg"] },
+    "2025-03": { n: 0, t: [] },
+    "2025-04": { n: 1, t: ["236b3ffc-1f83-4eba-8437-ea4d67712924/5faeb467-efa6-4a2f-b75c-e74d95425410.jpg"] },
+    "2025-05": { n: 0, t: [] }, "2025-06": { n: 0, t: [] }, "2025-07": { n: 0, t: [] }, "2025-08": { n: 0, t: [] },
+    "2025-09": { n: 1, t: ["dfd6852b-c5d8-4d02-b9c1-e26087fe9c0f/09b8c01c-3efe-4a8e-800f-14c528eb115c.jpg"] },
+    "2025-10": { n: 0, t: [] }, "2025-11": { n: 0, t: [] },
+    "2025-12": { n: 1, t: ["0e2f004f-6987-40dc-b22a-68712f17b4c5/d7fa8612-b7b3-4712-8cd8-59c5ca554cef.jpg"] },
+    "2026-01": { n: 5, t: ["4dadceca-1f54-458a-a19a-fff775825b01/37bbe7aa-b8c5-4c64-ae78-75276e842447.jpg","28cca0f6-a4c3-4529-8263-8d6257d4cddd/403a936d-3816-4cdd-8e32-061acc8df615.jpg","18a3b4b0-52ed-4eb9-8104-aa4abade5220/9cc0dfe9-2d7c-45c9-b7fb-f62e61efd314.jpg","988f5339-0635-4f8c-958f-bc7e9cf0b9da/12a3a9da-bf16-415b-b706-c5154a571f1d.jpg","9dad7748-e477-4098-a5d8-81cbd7967af3/c18c2f63-5c3d-4a99-baf9-209cf63acab3.jpg"] },
+    "2026-02": { n: 7, t: ["3a4dbd6c-74ca-4b5d-bce5-d02b6ea69fc1/f1115493-adf4-4830-802e-a6e240bdec85.jpg","699e54df-90e3-4b6f-84a1-d984ee824fb2/c6235c64-4a38-4074-a36a-54bf83f84437.jpg","cb210fc1-49a2-494a-9565-2f490fdf516c/921e9fc0-4048-440d-890f-2f38a2bb7733.jpg","b484bbfb-b1d5-4935-9cf6-6647bd2389e7/0bd0bb06-e81b-4b19-8e0f-d8c07168596e.jpg","f401877b-dcb1-40b7-8178-facc2b99795a/4500fc14-52a1-49b7-8a9d-622892b43a5b.jpg","22fdb1e1-eceb-43ab-b89d-9ea09e6e98a4/b78e95e9-ad58-48d3-a3e8-d931447e036c.jpg","4df6b759-67cf-4cfc-b1b4-16edf6fb51fd/c09c9cbe-d72c-42c0-97b7-603a3e0350f8.jpg"] },
+    "2026-03": { n: 3, t: ["6d1a2fa3-6181-4f8f-8a4d-d79b4052baf3/e32979fb-e53d-4e30-81a7-01409d0ea656.jpg","0782004d-090c-4658-8970-5bd0c9f463d1/8cb8b754-2989-432f-8cf3-fb0820062955.jpg","e68cebec-1509-4ea5-a09a-0a3fd3e423da/25d80348-417b-462b-9d84-70e844729284.jpg"] },
+    "2026-04": { n: 6, t: ["f5ecaa02-d054-4b5c-8fbf-562074605e4b/54b64cca-bed7-42f3-97af-902bc6de3d4e.jpg","dde5c405-c31f-4f77-90ce-af1db01fc1bc/8d601f13-bf64-4a72-9442-b7114a7cc0dd.jpg","e6558cec-49e9-4e3b-8f6c-936b3d544a3b/4593a32d-1b2d-4851-9fae-a65bfc43ad63.jpg","1a2d365a-b01c-4f0d-9089-35c31b8f5adc/b9dad371-6817-4f18-817b-a339907379f8.jpg","cd92cb37-d5a9-4609-a4d0-c83b8304d971/dfda919c-7935-419c-a34c-c00a521773f6.jpg","eb5fab1f-a620-46dc-813d-c5834b9958a8/65413034-fb3d-43d5-8473-bcc0f333a5d2.jpg"] },
+    "2026-05": { n: 2, t: ["7ca5e9ef-b8d5-4a51-a235-d2e0ff742305/5651dcec-a557-4bff-bf5e-f7720d9ac69a.jpg","d2f81054-20ce-4518-afa6-40a966c657ef/eddb37dd-4067-49e1-a5c7-6d8b1e60dc94.jpg"] },
+    "2026-06": { n: 2, t: ["0d17f678-4c15-4bd9-808e-d79e49432251/82a1d7da-4f84-4977-af47-8d6c48effadf.jpg","8611e1d5-0e6f-473e-9d39-d2a5471f6f07/3ed0bec0-31e6-44ce-b784-e6d791fd50c5.jpg"] },
+    "2026-07": { n: 28, t: ["2f8b6d80-07ca-481b-a1a2-7d01965b191d/e488212e-5e17-416a-a3cb-52a20ed9569c.jpg","9d005d25-cb3d-4cba-9319-9a52a6c370ce/990aeaee-d1f9-4522-80aa-c0220f1b5c3a.jpg","3ab2805b-42ab-47fe-9b53-172019f008e1/d2859ef7-a468-4bd3-a839-ab4ad0086d5a.jpg","f3a1dc83-6f05-4b01-8d59-dd32fc357495/0f686806-153e-4aec-bfec-dbe688e7a482.jpg","3eebaa2d-9f4d-4edf-b141-e97ce76c35e0/4ea11ac8-a00f-446b-8a19-b9bf802038a9.jpg","b45e9f17-ba39-49c7-b4db-0409db94bfd1/a61e2ba2-2d11-4b8f-8e92-de9849cecb52.jpg","c7db727a-4dbe-48e0-9651-82801373ef0a/078b32ef-ef1a-4e95-b57d-fb84bd3dbb7e.jpg","f6fd3f0a-483f-466e-bfcd-3bf8e8bd2fb8/654c785c-ce23-4f0c-ae68-b4da2d0507df.jpg"] },
+    "2026-08": { n: 27, t: ["fc3080c4-c870-4f33-b4db-c08a3d9728d4/c20cb529-c34b-4764-808a-361520a4905b.jpg","569cfa7e-8b6b-4588-9543-c7db3d5631e1/7edc9fd0-c7e1-4235-a76a-4bf39619dd42.jpg","b40c5527-165a-4c9d-9332-b784847ec7d7/4230400c-b279-465f-8479-13480c8fa3e4.jpg","7bdc1529-0fac-43bc-93cc-0c890b04ff53/2d85a15a-23af-43fd-a8ea-2e703457288d.jpg","2fae39f6-fdc0-47ce-84fb-9b7651ceeca7/e9613236-cbc8-49ce-a50e-c8b43400e5a7.jpg","5c46b014-ad5a-4a43-9c6b-3c662a40847d/77b513f0-0132-4e09-b802-7a043a4f28eb.jpg","1d42870d-a83f-4978-a947-3aef29141aa0/d1f0623a-75df-4896-a4bb-13aeec33c930.jpg","5d513f87-c20c-43e8-8ec9-c53155aacf53/baecf583-398d-44cd-9278-b5e02002b455.jpg"] },
+    "2026-09": { n: 18, t: ["765b4bae-f17b-4033-b2ad-81220f76c99d/16ef36c9-a3d6-4aa7-b5e9-738a4d0b2667.jpg","c37e5a1f-810c-499c-81ef-cf7f0ccc83ed/252afc99-d51e-4478-9088-c9b18d898737.jpg","18e5f72a-4047-4ae3-9a65-dde081e4db43/d23235c6-89ba-4652-b6a9-c42cc3b3156a.jpg","78389844-24b8-4db6-b8c4-ac0f6f9aad30/d97a50bb-c194-4468-9f78-46ced91a2a9d.jpg","a2d14813-5ea0-47c1-ae23-8df39d23f56f/698ade0c-fc2e-4b2c-9623-72d4f1aa9fca.jpg","50e0d77f-6866-4279-9d16-bc183f421940/991e915d-c458-45a8-885e-a114fb1f5d36.jpg","8ae7de14-7517-4620-b2ee-cde4fbb3c3c2/ee8c79a1-2dee-4249-9e58-d1da53d4866f.jpg","43ce8332-9af4-43b1-af27-1302e138159f/e509cf09-b9eb-4339-b95f-4eb1d947dbdd.jpg"] },
+    "2026-10": { n: 0, t: [] }, "2026-11": { n: 0, t: [] }, "2026-12": { n: 0, t: [] },
+  };
+
+  const keyOf = (y, m) => y + "-" + String(m).padStart(2, "0");
+  const pretty = (key) => { const [y, m] = key.split("-"); return MNAME[+m - 1] + " " + y; };
+  const level = (n) => (n === 0 ? 0 : n <= 4 ? 1 : n <= 9 ? 2 : 3);
+  const YEARS = {
+    "2025": { n: 5, months: 4 },
+    "2026": { n: 98, months: 9 },
+  };
+  const ACTIVE = Object.keys(MONTHS).filter((k) => MONTHS[k].n > 0).sort();
+  let selected = "2026-07";
+
+  /* ---- 1. hero grid ---- */
+
+  /* ---- 2a. desktop bars: one column per active month ---- */
+  const chartDesktop = document.getElementById("chart-desktop");
+  const MAX = Math.max(...ACTIVE.map((k) => MONTHS[k].n));
+  {
+    const bars = document.createElement("div");
+    bars.className = "bars";
+    bars.setAttribute("role", "img");
+    const months = document.createElement("div");
+    months.className = "bar-months";
+    months.setAttribute("aria-hidden", "true");
+    const spoken = [];
+    ACTIVE.forEach((key, i) => {
+      const n = MONTHS[key].n;
+      const [y, m] = key.split("-");
+      const prevGap = i === 0 ? 99 : (+y * 12 + +m) - (+ACTIVE[i - 1].slice(0, 4) * 12 + +ACTIVE[i - 1].slice(5));
+      const nextGap = i === ACTIVE.length - 1 ? 99 : (+ACTIVE[i + 1].slice(0, 4) * 12 + +ACTIVE[i + 1].slice(5)) - (+y * 12 + +m);
+      const odd = prevGap >= 2 && nextGap >= 2;
+      const col = document.createElement("div");
+      col.className = "bar-col" + (n === MAX ? " is-peak" : "") + (key === TODAY ? " is-current" : "") + (odd ? " is-odd" : "");
+      col.style.setProperty("--h", Math.max(4, Math.round((n / MAX) * 100)) + "%");
+      col.title = pretty(key) + ": " + n + " works" + (odd ? " (isolated month)" : "");
+      col.innerHTML = '<span class="bar-value">' + n + '</span><div class="bar"></div>';
+      bars.appendChild(col);
+      const lbl = document.createElement("span");
+      lbl.textContent = MNAME[+m - 1] + ((+m === 1 || i === 0) ? " " + y.slice(2) : "");
+      months.appendChild(lbl);
+      spoken.push(pretty(key) + " " + n);
+    });
+    bars.setAttribute("aria-label", "Works per active month: " + spoken.join(", ") + ".");
+    chartDesktop.append(bars, months);
+  }
+
+  /* ---- 2b. mobile rows: last 6 calendar months, newest first ---- */
+  const chartMobile = document.getElementById("chart-mobile");
+  {
+    const keys = [];
+    let y = 2026, m = 9;
+    for (let i = 0; i < 6; i++) { keys.push(keyOf(y, m)); m--; if (m === 0) { m = 12; y--; } }
+    keys.forEach((key) => {
+      const n = MONTHS[key] ? MONTHS[key].n : 0;
+      const li = document.createElement("li");
+      li.className = (n === MAX ? "is-peak" : "") + (key === TODAY ? " is-current" : "");
+      li.innerHTML =
+        '<span class="r-label">' + pretty(key) + '</span>' +
+        '<span class="r-count">' + n + '</span>' +
+        '<span class="r-track"><i style="--w:' + Math.max(2, Math.round((n / MAX) * 100)) + '%"></i></span>';
+      chartMobile.appendChild(li);
+    });
+  }
+
+  /* ---- 4. season wall ---- */
+  const yearsHost = document.getElementById("years");
+  Object.keys(YEARS).forEach((year) => {
+    const block = document.createElement("div");
+    block.className = "year";
+    block.innerHTML =
+      '<div class="year-head"><span class="y">' + year + '</span>' +
+      '<span class="t">' + YEARS[year].n + ' works &middot; ' + YEARS[year].months + ' active months</span></div>' +
+      '<div class="quarters"></div>';
+    const qs = block.querySelector(".quarters");
+    for (let q = 0; q < 4; q++) {
+      const qEl = document.createElement("div");
+      qEl.className = "quarter";
+      qEl.innerHTML = '<span class="qk">Q' + (q + 1) + '</span><div class="months"></div>';
+      const grid = qEl.querySelector(".months");
+      for (let i = 0; i < 3; i++) {
+        const key = keyOf(+year, q * 3 + i + 1);
+        const d = MONTHS[key] ?? { n: 0, t: [] };
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "month";
+        b.dataset.key = key;
+        b.dataset.l = String(level(d.n));
+        b.setAttribute("aria-pressed", String(key === selected));
+        b.title = pretty(key) + ": " + d.n + " works";
+        b.innerHTML = '<span class="mname">' + MNAME[q * 3 + i] + '</span><span class="mcount">' + d.n + '</span>';
+        b.addEventListener("click", () => select(key));
+        grid.appendChild(b);
+      }
+      qs.appendChild(qEl);
+    }
+    yearsHost.appendChild(block);
+  });
+
+  const unfold = document.getElementById("unfold");
+  function select(key) {
+    selected = key;
+    document.querySelectorAll(".month").forEach((m) => m.setAttribute("aria-pressed", String(m.dataset.key === key)));
+    const d = MONTHS[key] ?? { n: 0, t: [] };
+    const extra = d.n - d.t.length;
+    unfold.innerHTML =
+      '<div class="unfold-head"><span class="big">' + d.n + ' works</span>' +
+      '<span class="sub">' + pretty(key) + '</span>' +
+      '<span class="sub">' + (d.t.length ? "showing " + d.t.length + " of " + d.n : "nothing made this month") + '</span></div>' +
+      '<div class="thumbs">' +
+      d.t.map((p) => '<img src="' + BASE + p + '" alt="" loading="lazy" />').join("") +
+      (extra > 0 ? '<span class="more">+' + extra + '</span>' : "") +
+      "</div>" +
+      (d.t.length ? '<p class="note quiet" style="margin:8px 0 0">The month label would filter the Grid view to ' + pretty(key) + ".</p>" : "");
+  }
+  select(selected);
+
+  /* ---- 3. rhythm rail ---- */
+  const rail = document.getElementById("rail");
+  rail.innerHTML = "<span></span>" + MNAME.map((m) => '<span class="rh">' + m[0] + "</span>").join("");
+  const spokenRail = [];
+  [2025, 2026].forEach((year) => {
+    const label = document.createElement("span");
+    label.className = "rl";
+    label.textContent = year;
+    rail.appendChild(label);
+    for (let m = 1; m <= 12; m++) {
+      const key = keyOf(year, m);
+      const d = MONTHS[key] ?? { n: 0, t: [] };
+      const el = document.createElement("span");
+      el.className = "dot";
+      el.dataset.on = d.n > 0 ? "1" : "0";
+      el.dataset.quiet = d.n === 0 && key <= TODAY ? "1" : "0";
+      el.dataset.future = key > TODAY ? "1" : "0";
+      el.dataset.best = d.n >= 18 ? "1" : "0";
+      el.textContent = String(m).padStart(2, "0");
+      el.title = pretty(key) + ": " + d.n + " works";
+      rail.appendChild(el);
+      if (d.n > 0) spokenRail.push(pretty(key) + " " + d.n);
+    }
+  });
+  rail.setAttribute("aria-label", "Months with new works: " + spokenRail.join(", ") + ".");
+
+  /* ---- 5. weekday ---- */
+  const WEEK = [["Mon", 14], ["Tue", 7], ["Wed", 6], ["Thu", 12], ["Fri", 31], ["Sat", 8], ["Sun", 25]];
+  const finger = document.getElementById("finger");
+  const wmax = Math.max(...WEEK.map((w) => w[1]));
+  WEEK.forEach(([name, n]) => {
+    const col = document.createElement("div");
+    col.className = "fcol" + (n === wmax ? " is-top" : "");
+    col.title = name + ": " + n + " works";
+    col.innerHTML = '<span class="fv">' + n + '</span><div class="fb" style="--h:' + Math.round((n / wmax) * 100) + '%"></div>';
+    finger.appendChild(col);
+  });
+
+  /* ---- 6. tags: constellation (desktop) + pills (mobile), same numbers ---- */
+  const TAGS = [["线条", 76], ["颜色", 47], ["上色", 10], ["文字", 4], ["粘贴", 3]];
+  const BLOB_POS = [{ l: 3, t: 22 }, { l: 25, t: 6 }, { l: 47, t: 56 }, { l: 55, t: 14 }, { l: 72, t: 58 }];
+  const BLOB_BG = ["var(--primary)", "var(--secondary)", "var(--accent)", "var(--surface)", "var(--surface)"];
+  const constellation = document.getElementById("constellation");
+  TAGS.forEach(([name, n], i) => {
+    const size = Math.round(44 + Math.sqrt(n) * 8.6);
+    const el = document.createElement("div");
+    el.className = "blob";
+    el.style.cssText =
+      "width:" + size + "px;height:" + size + "px;left:" + BLOB_POS[i].l + "%;top:" + BLOB_POS[i].t +
+      "%;background:" + BLOB_BG[i] + ";animation-delay:" + (i * 0.6) + "s";
+    el.innerHTML = '<span class="bn" style="font-size:' + Math.round(size / 4.4) + 'px">' + n +
+      '</span><span class="bl">' + name + "</span>";
+    el.title = name + ": " + n + " works";
+    constellation.appendChild(el);
+  });
+  const pills = document.getElementById("pills");
+  TAGS.forEach(([name, n]) => {
+    const li = document.createElement("li");
+    li.innerHTML =
+      '<span class="n">' + n + "</span>" +
+      '<span class="body"><span class="name">' + name + '</span>' +
+      '<span class="share">' + Math.round((n / 103) * 100) + '%</span>' +
+      '<span class="track"><i style="--w:' + Math.round((n / 103) * 100) + '%"></i></span></span>';
+    li.title = name + ": " + n + " works";
+    pills.appendChild(li);
+  });
+
+  /* ---- 7. busiest day strip ---- */
+  const DAY = [
+    "2195a1b2-59b3-4c80-8f19-aaa55614edef/dd8594d0-0075-4182-8ac8-16ee85db3096.jpg",
+    "b135b4c0-841c-48cc-9922-8d3f412b3257/8feb4caa-9d5e-41eb-9071-7e2553c981a4.jpg",
+    "6843c118-0fc1-4bcc-83bd-41fe0aff3ab7/238bfb20-f992-4366-982f-379513d26d08.jpg",
+    "32762b21-583e-4bca-8a32-91ac4bec380d/97dc4274-1848-438e-9ff4-87d0b0ff27ad.jpg",
+    "ec28aae2-19e0-42d6-97f4-34c7ece11111/a32ad20e-a3fc-4e32-94da-c09d7e5ec3a9.jpg",
+    "952f74d5-d3e7-4224-b13d-7abc7d0778fb/943a9c20-2f88-4deb-b516-aaee364437ff.jpg",
+    "f2694818-67eb-460a-92ca-6baa346109a6/b5cdd039-4357-4c74-a9bf-14f24a94d54d.jpg",
+    "9c1440b3-0817-4f3c-a826-46d4db454908/3c10f23f-d6f4-4641-b29b-7576280f821d.jpg",
+    "64dc608a-c7d2-48bf-9141-e4cc8a7e4cff/579c879c-00ec-4675-a54d-c279be469f8d.jpg",
+    "1ec3c310-1e49-4da6-9c93-b3d8c08a6910/21251909-514f-4d7e-9684-3ea95a14027c.jpg",
+    "9a910431-2a35-429a-832a-3813da6dd2f5/7d57f641-c4b5-4242-85f8-0c13ab3a826c.jpg",
+  ];
+  const strip = document.getElementById("day-strip");
+  DAY.forEach((p, i) => {
+    const img = document.createElement("img");
+    img.src = BASE + p;
+    img.alt = i === 0 ? "Work dated 17 July 2026" : "";
+    img.loading = "lazy";
+    strip.appendChild(img);
+  });
+</script>
+</body>
+</html>
