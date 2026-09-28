@@ -477,15 +477,17 @@ function LightboxContent({
 
       const atFitScale = gesture.startTransform.scale <= MIN_SCALE;
 
-      // Sideways drag at fit scale on a multi-image work changes artwork.
-      if (atFitScale && gesture.axis === "x" && hasMultiple) {
-        gesture.offset = dx;
-        setTrackOffset(dx, false);
+      // At fit scale there is nothing to pan to, so a sideways drag on a
+      // multi-image work means "show the neighbouring artwork" instead.
+      if (atFitScale) {
+        if (gesture.axis === "x" && hasMultiple) {
+          gesture.offset = dx;
+          setTrackOffset(dx, false);
+        }
         return;
       }
 
-      if (gesture.axis === "y" || atFitScale) return;
-
+      // Zoomed in: pan on both axes, however the finger starts moving.
       applyTransform(
         constrain({
           scale: gesture.startTransform.scale,
@@ -651,7 +653,12 @@ function LightboxContent({
               <Image
                 ref={slot === ACTIVE_SLOT ? imgRef : undefined}
                 alt={slot === ACTIVE_SLOT ? altText : ""}
-                className="max-h-full max-w-full select-none will-change-transform"
+                // The `width`/`height` attributes act as presentational hints
+                // (`width: 4000px`), and Tailwind's preflight only resets
+                // `height`. Without `w-auto` the flex item keeps that hinted
+                // width while `max-height` clamps the height, squashing the
+                // artwork; `w-auto h-auto` lets the photo keep its own ratio.
+                className="max-h-full max-w-full h-auto w-auto select-none object-contain will-change-transform"
                 draggable={false}
                 fetchPriority={slot === ACTIVE_SLOT ? "high" : "low"}
                 height={slide.height}
