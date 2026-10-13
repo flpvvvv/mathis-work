@@ -39,7 +39,7 @@ This project follows a **Playful Brutalism** aesthetic:
 4. White balance: "Pick white" samples the median colour of a patch the user taps on the paper; `gainsFromSample` neutralises that colour (luminance preserving) with strength/brightness sliders
 5. Output extracted as 80% JPEG and uploaded to Supabase Storage bucket `artworks`
 6. Storage path: `{work_id}/{image_id}.jpg`
-7. **No separate thumbnails in Supabase** — Next.js `<Image>` generates responsive srcset with WebP/AVIF negotiation
+7. **No separate thumbnails in Supabase** — Next.js `<Image>` generates responsive srcset with WebP/AVIF negotiation (`images.formats` opts into AVIF; WebP alone is the Next default). `images.remotePatterns` is pinned to the hostname of `NEXT_PUBLIC_SUPABASE_URL` (`next.config.ts`) — a `*.supabase.co` wildcard would let any other Supabase project route its images through this deployment's optimizer
 8. Gallery grid cards: `priority` for first 4 images (above-fold), `loading="lazy"` for rest
 9. Work detail images: `quality={70}` with constrained `sizes` to reduce payload
 10. Work detail images open in a full-screen viewer (`src/components/work/image-lightbox.tsx`) — native `<dialog>` + Pointer Events, no zoom dependency: tap to open, pinch/wheel to zoom, drag to pan, swipe between images, tap again to step out. It renders a previous/current/next track so neighbouring images preload at viewer quality before they are swiped to
@@ -65,6 +65,9 @@ Set in both `next.config.ts` and middleware:
 - `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
 - `Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()`
 - `X-DNS-Prefetch-Control: on`
+- `poweredByHeader: false` drops the default `X-Powered-By: Next.js` — do not remove it
+
+Redirect targets and hrefs that come from the URL go through `safeInternalPath` (`src/lib/utils.ts`). `startsWith("/")` is **not** sufficient: `//evil.example` passes it and resolves cross-origin, so `/auth/callback?next=`, `/login?next=` and `/works/[id]?back=` were open redirects.
 
 HTTPS enforced by Vercel (308 redirect). `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_…`) is intentionally public — audit tools flag it as "leaked secret" but this is a false positive. Legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` JWTs are no longer used.
 

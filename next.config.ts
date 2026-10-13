@@ -15,15 +15,24 @@ const securityHeaders = [
   },
 ];
 
+// The optimizer may only fetch from this project's Storage host: a `*.supabase.co`
+// wildcard would let any other Supabase project route its images through us.
+const supabaseHostname = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
+  } catch {
+    return "";
+  }
+})();
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   images: {
     qualities: [70, 75, 90],
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
-      },
-    ],
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: supabaseHostname
+      ? [{ protocol: "https", hostname: supabaseHostname }]
+      : [],
   },
   async headers() {
     return [

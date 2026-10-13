@@ -31,6 +31,22 @@ describe("GET /auth/callback", () => {
     expect(response.headers.get("location")).toBe("http://localhost/admin");
   });
 
+  it.each(["//evil.example", "/\\evil.example", "/%2f%2fevil.example"])(
+    "keeps %s on this origin",
+    async (next) => {
+      const response = await GET(
+        new Request(
+          `http://localhost/auth/callback?code=abc123&next=${encodeURIComponent(next)}`,
+        ),
+      );
+
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get("location")!, "http://localhost").origin).toBe(
+        "http://localhost",
+      );
+    },
+  );
+
   it("redirects to requested internal path", async () => {
     const response = await GET(
       new Request("http://localhost/auth/callback?code=abc123&next=/admin/new"),

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/login-form";
 import { getCurrentProfile } from "@/lib/auth";
+import { safeInternalPath } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Admin Login",
@@ -23,10 +24,7 @@ export default async function LoginPage({ searchParams }: Props) {
     searchParams,
   ]);
 
-  const redirectPath =
-    resolvedParams.next && resolvedParams.next.startsWith("/")
-      ? resolvedParams.next
-      : "/admin";
+  const redirectPath = safeInternalPath(resolvedParams.next, "/admin");
 
   if (profile?.is_admin) {
     redirect(redirectPath);

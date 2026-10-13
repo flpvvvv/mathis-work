@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { safeInternalPath } from "@/lib/utils";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const nextParam = requestUrl.searchParams.get("next");
-  const redirectTo = nextParam?.startsWith("/") ? nextParam : "/admin";
+  const redirectTo = safeInternalPath(nextParam, "/admin");
 
   if (code) {
     const supabase = await getSupabaseServerClient();

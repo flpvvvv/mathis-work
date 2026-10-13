@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getCurrentProfile } from "@/lib/auth";
 import { getWorkById } from "@/lib/data/works";
 import { getPublicImageUrl } from "@/lib/storage/images";
+import { safeInternalPath } from "@/lib/utils";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -74,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function WorkPage({ params, searchParams }: Props) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const [work, profile] = await Promise.all([getWorkById(id), getCurrentProfile()]);
-  const backHref = query.back?.startsWith("/") ? query.back : "/";
+  const backHref = safeInternalPath(query.back, "/");
 
   if (!work) {
     notFound();
