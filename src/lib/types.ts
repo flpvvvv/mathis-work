@@ -1,4 +1,4 @@
-export type WorkTag = {
+type WorkTag = {
   id: string;
   name: string;
 };

@@ -93,7 +93,7 @@ export function gainsFromSample(
   };
 }
 
-export function isIdentityGains(gains: WhiteBalanceGains): boolean {
+function isIdentityGains(gains: WhiteBalanceGains): boolean {
   return (
     Math.abs(gains.r - 1) < 1e-3 &&
     Math.abs(gains.g - 1) < 1e-3 &&

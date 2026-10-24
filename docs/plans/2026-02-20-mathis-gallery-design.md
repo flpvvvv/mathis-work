@@ -480,7 +480,7 @@ Implementation:
 | Image correction | HTML Canvas + `perspective-transform` |
 | Hosting | Vercel |
 | Package manager | pnpm |
-| Linting | ESLint + Prettier |
+| Linting | Biome |
 
 ---
 

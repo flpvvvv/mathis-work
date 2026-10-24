@@ -1,7 +1,6 @@
 import { cache } from "react";
-
-import type { Work } from "@/lib/types";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import type { Work } from "@/lib/types";
 
 type GalleryFilters = {
   query?: string;

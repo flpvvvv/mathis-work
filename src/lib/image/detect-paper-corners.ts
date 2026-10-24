@@ -335,7 +335,6 @@ function classifyEdgePoints(
 function gradientMagnitude(
   lum: Float32Array,
   width: number,
-  height: number,
   x: number,
   y: number,
 ) {
@@ -383,7 +382,7 @@ function refineCorner(
         if (!onBoundary) continue;
       }
 
-      const score = gradientMagnitude(lum, width, height, x, y);
+      const score = gradientMagnitude(lum, width, x, y);
       if (score > bestScore) {
         bestScore = score;
         best = { x, y };

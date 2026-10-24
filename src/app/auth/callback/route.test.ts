@@ -41,9 +41,9 @@ describe("GET /auth/callback", () => {
       );
 
       expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!, "http://localhost").origin).toBe(
-        "http://localhost",
-      );
+      const location = response.headers.get("location");
+      if (!location) throw new Error("missing location header");
+      expect(new URL(location, "http://localhost").origin).toBe("http://localhost");
     },
   );
 

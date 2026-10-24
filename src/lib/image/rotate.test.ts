@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   normalizeRotation,
+  rotatedSize,
   rotatePoint,
   rotatePoints,
-  rotatedSize,
 } from "@/lib/image/rotate";
 
 describe("normalizeRotation", () => {

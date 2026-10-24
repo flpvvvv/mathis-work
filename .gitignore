@@ -17,7 +17,6 @@ pnpm-debug.log*
 /out/
 /build
 *.tsbuildinfo
-.eslintcache
 .cache
 
 # Vercel

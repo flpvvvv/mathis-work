@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Plus, Hash } from "lucide-react";
+import { Hash, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Input } from "@/components/ui/input";

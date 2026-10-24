@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
-import { WorkGallery } from "@/components/work/work-gallery";
 import { Badge } from "@/components/ui/badge";
+import { WorkGallery } from "@/components/work/work-gallery";
 import { getCurrentProfile } from "@/lib/auth";
 import { getWorkById } from "@/lib/data/works";
 import { getPublicImageUrl } from "@/lib/storage/images";
@@ -35,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   let description = `Original artwork by Mathis, created ${dateStr}.`;
   if (tagNames) description += ` Tagged: ${tagNames}.`;
   description += ` View the full-resolution image and explore more works in the Mathis Gallery.`;
-  if (description.length > 160) description = description.slice(0, 157) + "…";
+  if (description.length > 160) description = `${description.slice(0, 157)}…`;
 
   const coverImage =
     work.images.find((img) => img.id === work.cover_image_id) ?? work.images[0];

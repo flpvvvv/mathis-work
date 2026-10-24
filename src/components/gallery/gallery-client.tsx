@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2, Search, X } from "lucide-react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { Loader2, Search, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
@@ -20,8 +20,8 @@ import { GridView } from "@/components/gallery/grid-view";
 import { InfiniteLoader } from "@/components/gallery/infinite-loader";
 import { TimelineView } from "@/components/gallery/timeline-view";
 import {
-  ViewModeToggle,
   type ViewMode,
+  ViewModeToggle,
 } from "@/components/gallery/view-mode-toggle";
 import { Input } from "@/components/ui/input";
 import type { GalleryStats } from "@/lib/data/stats";
@@ -257,7 +257,7 @@ export function GalleryClient({
         <ViewModeToggle mode={viewMode} onChange={setChosenViewMode} />
       </div>
 
-      <div aria-label="Search artworks" className="relative" role="search">
+      <search aria-label="Search artworks" className="relative">
         <Search
           aria-hidden="true"
           className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[var(--text-secondary)]"
@@ -286,7 +286,7 @@ export function GalleryClient({
             <X className="size-4" />
           </button>
         )}
-      </div>
+      </search>
 
       <GalleryFilters
         filters={filters}

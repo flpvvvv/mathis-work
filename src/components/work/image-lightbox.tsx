@@ -2,8 +2,8 @@
 
 import { ChevronLeft, ChevronRight, Minus, Plus, X } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { getPublicImageUrl } from "@/lib/storage/images";
 import type { WorkImage } from "@/lib/types";

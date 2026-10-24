@@ -24,14 +24,14 @@ export type StatsMonth = {
   covers: string[];
 };
 
-export type StatsTag = {
+type StatsTag = {
   name: string;
   count: number;
   firstMonth: string;
   lastMonth: string;
 };
 
-export type StatsDay = {
+type StatsDay = {
   /** `YYYY-MM-DD` */
   date: string;
   count: number;
@@ -71,7 +71,7 @@ export type GalleryStats = {
 };
 
 export const MAX_MONTH_COVERS = 8;
-export const MAX_DAY_COVERS = 8;
+const MAX_DAY_COVERS = 8;
 
 /** Rows fetched per request; a PostgREST response is capped at 1000 rows. */
 const FETCH_PAGE_SIZE = 1000;

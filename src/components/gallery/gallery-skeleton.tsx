@@ -6,6 +6,7 @@ export function GallerySkeleton() {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, index) => (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: fixed set of static placeholders
             key={index}
             className="aspect-[3/4] animate-pulse rounded-none bg-black/10 dark:bg-white/10"
           />

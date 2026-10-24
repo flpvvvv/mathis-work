@@ -1,15 +1,14 @@
-import { cache } from "react";
 import { redirect } from "next/navigation";
-
-import type { Profile } from "@/lib/types";
+import { cache } from "react";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import type { Profile } from "@/lib/types";
 
 type MaybeUser = {
   id: string;
   email?: string;
 } | null;
 
-export const getCurrentUser = cache(async (): Promise<MaybeUser> => {
+const getCurrentUser = cache(async (): Promise<MaybeUser> => {
   try {
     const supabase = await getSupabaseServerClient();
     const {

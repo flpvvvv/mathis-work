@@ -600,6 +600,7 @@ export function AnalyticsView({ filters, stats, hrefForRange }: Props) {
             {MONTH_INITIALS.map((initial, index) => (
               <span
                 className="text-center font-mono text-[0.5rem] uppercase text-[var(--text-secondary)]"
+                // biome-ignore lint/suspicious/noArrayIndexKey: fixed calendar month order
                 key={`${initial}-${index}`}
               >
                 {initial}

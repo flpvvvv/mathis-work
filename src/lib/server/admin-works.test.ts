@@ -41,15 +41,24 @@ function makeBuilder(
     return Promise.resolve(results[`${table}.${op}`] ?? { data: null, error: null });
   };
 
+  const setOp = (next: string) => {
+    op = next;
+    return builder;
+  };
+
   const builder: FakeBuilder = {
-    select: () => ((op = "select"), builder),
-    insert: () => ((op = "insert"), builder),
-    update: () => ((op = "update"), builder),
-    upsert: () => ((op = "upsert"), builder),
-    delete: () => ((op = "delete"), builder),
+    select: () => setOp("select"),
+    insert: () => setOp("insert"),
+    update: () => setOp("update"),
+    upsert: () => setOp("upsert"),
+    delete: () => setOp("delete"),
     eq: () => builder,
-    in: (_column, values) => ((suffix = `(${values.join("|")})`), builder),
+    in: (_column, values) => {
+      suffix = `(${values.join("|")})`;
+      return builder;
+    },
     single: () => settle(),
+    // biome-ignore lint/suspicious/noThenProperty: the fake PostgREST builder must be awaitable
     then: (resolve, reject) => settle().then(resolve, reject),
   };
 

@@ -71,7 +71,8 @@ test.describe("Full screen artwork viewer", () => {
     );
 
     const stage = dialog.locator("div[tabindex]");
-    const box = (await stage.boundingBox())!;
+    const box = await stage.boundingBox();
+    if (!box) throw new Error("stage is not visible");
     const x = box.x + box.width / 2;
     const startY = box.y + box.height * 0.35;
 

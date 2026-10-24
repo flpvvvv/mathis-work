@@ -40,8 +40,9 @@ describe("fitLine and intersectLines", () => {
 
     expect(horizontal).toEqual({ vertical: false, a: 0, b: 10 });
     expect(vertical).toEqual({ vertical: true, x: 40 });
+    if (!horizontal || !vertical) throw new Error("expected fitted lines");
 
-    expect(intersectLines(horizontal!, vertical!)).toEqual({ x: 40, y: 10 });
+    expect(intersectLines(horizontal, vertical)).toEqual({ x: 40, y: 10 });
   });
 });
 

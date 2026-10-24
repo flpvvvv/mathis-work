@@ -1,7 +1,6 @@
 import type { PropsWithChildren } from "react";
-
-import { requireAdmin } from "@/lib/auth";
 import { AdminHeader } from "@/components/admin/admin-header";
+import { requireAdmin } from "@/lib/auth";
 
 export default async function AdminLayout({ children }: PropsWithChildren) {
   await requireAdmin();

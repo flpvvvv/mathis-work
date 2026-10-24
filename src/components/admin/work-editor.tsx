@@ -1,21 +1,21 @@
 "use client";
 
-import type { FormEvent, ReactNode } from "react";
-import { Check, Star, Trash2, Upload, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Check, Star, Trash2, Upload } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { TagInput } from "@/components/admin/tag-input";
-import type { EditableImage, SaveWorkPayload } from "@/lib/admin/work-payload";
-import { resolveCoverImageId } from "@/lib/admin/work-utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { EditableImage, SaveWorkPayload } from "@/lib/admin/work-payload";
+import { resolveCoverImageId } from "@/lib/admin/work-utils";
 import { reencodeToJpeg } from "@/lib/image/jpeg";
 import { createThumbnailUrl } from "@/lib/image/thumbnail";
 import {
@@ -633,7 +633,7 @@ export function WorkEditor({ mode, work, availableTags = [] }: Props) {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label>Tags</Label>
+            <Label htmlFor="tag-input">Tags</Label>
             <TagInput
               availableTags={availableTags}
               selectedTags={selectedTags}

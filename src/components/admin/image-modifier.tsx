@@ -12,33 +12,33 @@ import {
   ScanEye,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { detectPaperCorners } from "@/lib/image/detect-paper-corners";
-import { canvasToJpeg, loadImageFromBlob, type JpegResult } from "@/lib/image/jpeg";
+import { canvasToJpeg, type JpegResult, loadImageFromBlob } from "@/lib/image/jpeg";
 import {
   drawPerspectiveToCanvas,
-  scalePoints,
   type Point,
+  scalePoints,
 } from "@/lib/image/perspective";
 import { orderCorners } from "@/lib/image/quad";
 import {
   createRotatedSource,
   normalizeRotation,
+  type Rotation,
+  rotatedSize,
   rotatePoint,
   rotatePoints,
-  rotatedSize,
-  type Rotation,
 } from "@/lib/image/rotate";
 import {
   applyWhiteBalance,
   applyWhiteBalanceToPixels,
   gainsFromSample,
-  sampleWhiteRegion,
   type Rgb,
+  sampleWhiteRegion,
 } from "@/lib/image/white-balance";
 
 type Props = {

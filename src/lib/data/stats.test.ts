@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  MAX_MONTH_COVERS,
   aggregateWorks,
+  MAX_MONTH_COVERS,
   type RawStatsWork,
 } from "@/lib/data/stats";
 

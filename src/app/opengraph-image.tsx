@@ -35,6 +35,7 @@ export default function Image() {
             width="80"
             height="80"
           >
+            <title>Mathis Gallery</title>
             <rect width="256" height="256" fill="#FFE66D" />
             <rect
               x="16"
