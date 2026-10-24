@@ -4,9 +4,10 @@
 
 Public gallery webapp for Mathis's artwork at **works.mathis.day**. A neo-brutalist visual style with client-side perspective correction for artwork photos.
 
-- **Stack**: Next.js 15 (App Router), React, TypeScript, Tailwind CSS 4, shadcn/ui, Supabase (Auth + Postgres + Storage), TanStack Query, Vercel
+- **Stack**: Next.js 16 (App Router), React, TypeScript, Tailwind CSS 4, shadcn/ui, Supabase (Auth + Postgres + Storage), TanStack Query, Vercel
 - **Design spec**: `docs/plans/2026-02-20-mathis-gallery-design.md`
 - **Package manager**: pnpm
+- **Node**: 24 (`.nvmrc`). jsdom 30 requires `^22.22.2 || ^24.15.0 || >=26.0.0`, and its undici 8.12 dependency needs Node ≥22.19 — Node 22.12 fails `pnpm test` at worker startup with `Cannot read properties of undefined (reading 'bind')` in `undici/lib/interceptor/decompress.js`
 
 ## Architecture
 
