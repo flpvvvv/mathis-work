@@ -58,6 +58,7 @@ Icon
 .com.apple.timemachine.donotpresent
 
 # IDEs and Editors
+.claude/
 .cursor
 .vscode/
 .idea/
