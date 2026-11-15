@@ -30,7 +30,7 @@
     "tailwind-merge": "latest"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.5",
+    "@biomejs/biome": "^2.6.7",
     "@playwright/test": "latest",
     "@tailwindcss/postcss": "latest",
     "@testing-library/jest-dom": "latest",
@@ -43,7 +43,7 @@
     "postcss": "latest",
     "tailwindcss": "latest",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vite": "^8.3.5",
+    "vite": "^8.3.8",
     "vitest": "latest"
   },
   "pnpm": {
