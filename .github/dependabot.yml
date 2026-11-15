@@ -7,10 +7,18 @@ updates:
       day: "sunday"
       time: "02:00"
       timezone: "Etc/UTC"
+    # Dependabot passes the cooldown to pnpm as one global
+    # `--config.minimum-release-age` gate per updated dependency, and pnpm
+    # applies that gate to every entry already in the lockfile. A shorter
+    # window for patches lets a young patch into the lockfile that a later
+    # minor/major update's longer gate rejects, which fails the whole grouped
+    # run with ERR_PNPM_NO_MATURE_MATCHING_VERSION. Keep every window equal;
+    # 3 days is GitHub's default cooldown. See
+    # dependabot/dependabot-core#15937.
     cooldown:
-      default-days: 7
-      semver-major-days: 14
-      semver-minor-days: 7
+      default-days: 3
+      semver-major-days: 3
+      semver-minor-days: 3
       semver-patch-days: 3
     groups:
       all-dependencies:
