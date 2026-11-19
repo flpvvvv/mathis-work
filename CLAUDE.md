@@ -41,9 +41,10 @@ This project follows a **Playful Brutalism** aesthetic:
 5. Output extracted as 80% JPEG and uploaded to Supabase Storage bucket `artworks`
 6. Storage path: `{work_id}/{image_id}.jpg`
 7. **No separate thumbnails in Supabase** — Next.js `<Image>` generates responsive srcset with WebP/AVIF negotiation (`images.formats` opts into AVIF; WebP alone is the Next default). `images.remotePatterns` is pinned to the hostname of `NEXT_PUBLIC_SUPABASE_URL` (`next.config.ts`) — a `*.supabase.co` wildcard would let any other Supabase project route its images through this deployment's optimizer
-8. Gallery grid cards: `priority` for first 4 images (above-fold), `loading="lazy"` for rest
-9. Work detail images: `quality={70}` with constrained `sizes` to reduce payload
-10. Work detail images open in a full-screen viewer (`src/components/work/image-lightbox.tsx`) — native `<dialog>` + Pointer Events, no zoom dependency: tap to open, pinch/wheel to zoom, drag to pan, swipe between images, tap again to step out. It renders a previous/current/next track so neighbouring images preload at viewer quality before they are swiped to
+8. **Immutable images, long caches** — uploads set `cacheControl: "31536000"` and `images.minimumCacheTTL` is 31 days. This is only safe because storage paths wrap a fresh image UUID and are never rewritten. Do not lower either without a path-versioning scheme: the 4h default re-pulled multi-MB originals from Storage on every variant expiry and blew the egress quota
+9. Gallery grid cards: `priority` for first 4 images (above-fold), `loading="lazy"` for rest
+10. Work detail images: `quality={70}` with constrained `sizes` to reduce payload
+11. Work detail images open in a full-screen viewer (`src/components/work/image-lightbox.tsx`) — native `<dialog>` + Pointer Events, no zoom dependency: tap to open, pinch/wheel to zoom, drag to pan, swipe between images, tap again to step out. It renders a previous/current/next track so neighbouring images preload at viewer quality before they are swiped to
 
 ## SEO & Metadata
 

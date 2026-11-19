@@ -28,6 +28,10 @@ const supabaseHostname = (() => {
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
+    // Storage paths embed a fresh image UUID and are never rewritten, so a long
+    // TTL is safe. The 4h default re-pulled multi-MB originals from Supabase on
+    // every variant expiry, which dominated Storage egress.
+    minimumCacheTTL: 2_678_400, // 31 days
     qualities: [70, 75, 90],
     formats: ["image/avif", "image/webp"],
     remotePatterns: supabaseHostname

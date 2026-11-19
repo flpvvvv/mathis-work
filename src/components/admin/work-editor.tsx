@@ -348,6 +348,8 @@ export function WorkEditor({ mode, work, availableTags = [] }: Props) {
         const { error } = await supabase.storage
           .from(BUCKET_NAME)
           .upload(storagePath, upload.result.blob, {
+            // The path wraps a fresh image UUID, so this object is immutable.
+            cacheControl: "31536000",
             contentType: "image/jpeg",
             upsert: true,
           });
