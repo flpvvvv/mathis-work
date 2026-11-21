@@ -32,6 +32,14 @@ const nextConfig: NextConfig = {
     // TTL is safe. The 4h default re-pulled multi-MB originals from Supabase on
     // every variant expiry, which dominated Storage egress.
     minimumCacheTTL: 2_678_400, // 31 days
+    // Every width is a distinct optimizer cache entry, and a cold entry costs
+    // one full-size original from Storage. The layouts need 256-384 for grid
+    // cards, 640-1080 for a single work, 1920 for the viewer at 1x and 3840 for
+    // it at 2x; 1200 is the width social cards request. Keep this list to what
+    // the `sizes` props actually resolve to — the defaults advertise 15 widths
+    // in every srcset and let crawlers multiply the origin fetches.
+    deviceSizes: [640, 1080, 1200, 1920, 3840],
+    imageSizes: [64, 128, 256, 384],
     qualities: [70, 75, 90],
     formats: ["image/avif", "image/webp"],
     remotePatterns: supabaseHostname

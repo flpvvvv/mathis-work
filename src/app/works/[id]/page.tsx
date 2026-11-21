@@ -5,8 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { WorkGallery } from "@/components/work/work-gallery";
 import { getCurrentProfile } from "@/lib/auth";
 import { getWorkById } from "@/lib/data/works";
-import { getPublicImageUrl } from "@/lib/storage/images";
+import { getOptimizedImageUrl } from "@/lib/storage/images";
 import { safeInternalPath } from "@/lib/utils";
+
+/** 1200 is the width social cards want and is listed in `images.deviceSizes`. */
+const OG_IMAGE_WIDTH = 1200;
+const OG_IMAGE_QUALITY = 75;
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -38,12 +42,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const coverImage =
     work.images.find((img) => img.id === work.cover_image_id) ?? work.images[0];
+  // Crawlers fetch `og:image` directly, so it must go through the image
+  // optimizer: a Storage URL here means every bot downloads the full-size
+  // original, which is what dominated Supabase egress.
   const ogImages = coverImage
     ? [
         {
-          url: getPublicImageUrl(coverImage.storage_path),
-          width: coverImage.width,
-          height: coverImage.height,
+          url: getOptimizedImageUrl(
+            coverImage.storage_path,
+            OG_IMAGE_WIDTH,
+            OG_IMAGE_QUALITY,
+          ),
+          width: OG_IMAGE_WIDTH,
+          height: Math.round(
+            coverImage.height * (OG_IMAGE_WIDTH / Math.max(1, coverImage.width)),
+          ),
           alt: label,
         },
       ]

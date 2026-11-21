@@ -42,9 +42,11 @@ This project follows a **Playful Brutalism** aesthetic:
 6. Storage path: `{work_id}/{image_id}.jpg`
 7. **No separate thumbnails in Supabase** — Next.js `<Image>` generates responsive srcset with WebP/AVIF negotiation (`images.formats` opts into AVIF; WebP alone is the Next default). `images.remotePatterns` is pinned to the hostname of `NEXT_PUBLIC_SUPABASE_URL` (`next.config.ts`) — a `*.supabase.co` wildcard would let any other Supabase project route its images through this deployment's optimizer
 8. **Immutable images, long caches** — uploads set `cacheControl: "31536000"` and `images.minimumCacheTTL` is 31 days. This is only safe because storage paths wrap a fresh image UUID and are never rewritten. Do not lower either without a path-versioning scheme: the 4h default re-pulled multi-MB originals from Storage on every variant expiry and blew the egress quota
-9. Gallery grid cards: `priority` for first 4 images (above-fold), `loading="lazy"` for rest
-10. Work detail images: `quality={70}` with constrained `sizes` to reduce payload
-11. Work detail images open in a full-screen viewer (`src/components/work/image-lightbox.tsx`) — native `<dialog>` + Pointer Events, no zoom dependency: tap to open, pinch/wheel to zoom, drag to pan, swipe between images, tap again to step out. It renders a previous/current/next track so neighbouring images preload at viewer quality before they are swiped to
+9. **Every public image goes through the optimizer** — including `og:image`/`twitter:image`, which use `getOptimizedImageUrl` (`src/lib/storage/images.ts`) at 1200 px. A raw Storage URL in `<meta>` is fetched by crawlers that never run the page, so each one downloaded the full-size original in a loop the optimizer TTL cannot stop
+10. **Widths are a cache contract** — `images.deviceSizes`/`imageSizes` list only the widths the layouts resolve to; each width is a separate optimizer entry and a cold entry downloads the original. Widths passed to `getOptimizedImageUrl` must be in that list or the optimizer answers 400
+11. Gallery grid cards: `priority` for first 4 images (above-fold), `loading="lazy"` for rest
+12. Work detail images: `quality={70}` with constrained `sizes` to reduce payload
+13. Work detail images open in a full-screen viewer (`src/components/work/image-lightbox.tsx`) — native `<dialog>` + Pointer Events, no zoom dependency: tap to open, pinch/wheel to zoom, drag to pan, swipe between images, tap again to step out. It renders a previous/current/next track so neighbouring images preload at viewer quality before they are swiped to
 
 ## SEO & Metadata
 
@@ -55,6 +57,7 @@ This project follows a **Playful Brutalism** aesthetic:
 - `/login` has `robots: { index: false, follow: false }`
 - `robots.ts` disallows `/admin`, `/api/admin`, `/login`; points to `/sitemap.xml`
 - `sitemap.ts` lists all works from Supabase (up to 500 per page)
+- `og:image`/`twitter:image` on `/works/[id]` point at the 1200 px optimizer URL, never at Storage — see Image Pipeline §9
 - Meta descriptions: 120–160 characters; titles: ≥30 characters
 
 ## Security Headers
